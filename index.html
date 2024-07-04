@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lex-Machine</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        #recordButton {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <button id="recordButton">Start Monitoring</button>
+    <canvas id="oscilloscope"></canvas>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script type="module">
+        import './static/config.js';
+        import { setupRecognition } from './static/speechRecognition.js';
+        import './static/chatgpt.js';
+        import './static/elevenLabs.js';
+
+        setupRecognition();
+    </script>
+</body>
+</html>
