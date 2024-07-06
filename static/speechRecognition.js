@@ -47,7 +47,7 @@ bc.onmessage = async (event) => {
                     recognition.stop();
                     break;
                 case 'stop':
-                    if (continuousConversation) {
+                    if (continuousConversation && !recognizing) {
                         recognition.start();
                     }
                     break;
@@ -87,8 +87,18 @@ export function setupRecognition() {
     recognition.onstart = handleRecognitionStart;
     recognition.onend = handleRecognitionEnd;
     recognition.onresult = handleRecognitionResult;
+    recognition.onerror = handleRecognitionError;
+
 }
 
+
+async function handleRecognitionError() {
+    recognizing = false;
+    await bc.postMessage({
+        command: 'recognition_status',
+        status: 'disabled'
+    });
+}
 async function handleRecognitionStart() {
     recognizing = true;
     recordButton.textContent = 'Stop Monitoring';
