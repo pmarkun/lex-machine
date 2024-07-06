@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lex Dashboard</title>
+    <style>
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+            color: white;
+        }
+
+        button, input {
+            margin: 5pt;
+            padding: 20pt;
+        }
+
+        #audioInput input, #audioInput button {
+            border: solid 1px white;
+            background: transparent;
+            color: white;
+            display: inline-block;
+            /* padding: 5pt;
+            margin: 0;
+            min-height: 25pt; */
+        }
+        #audioInput input {
+            min-width: 450px;
+        }
+
+        #chatLog {
+            border: solid 1px white;
+            padding: 20pt;
+            margin: 10pt;
+        }
+    </style>
+</head>
+<body>
+    <button id="recognitionButton">Reconhecimento</button>
+    <button id="pageRefreshButton">Refresh Página</button>
+    <button id="contextResetButton">Reset Contexto</button>
+
+    <div id="recognitionStatus" class="status"></div>
+    <div id="audioStatus" class="status"></div>
+
+    <select name="voiceSelect" id="voiceSelect">
+        <option value="UlbdV3xpXRE93RKCykdn">Lex</option>
+        <option value="t0jbNlBVZ17f02VDIeMI">Jessie</option>
+        <option value="XrExE9yKIg1WjnnlVkGX">Matilda</option>
+        <option value="piTKgcLEGmPE4e6mEKli">Nicole</option>
+        <option value="knrPHWnBmmDHMoiMeP3l">Papai Noel</option>
+        <option value="pMsXgVXv3BLzUgSXRplE">Serena</option>
+    </select>
+
+    <div id="audioInput">
+        <input type="text" name="text" id="text" />
+        <button id="sendTextButton">Send Text</button>
+    </div>
+
+    <div id="chatLog">
+        LOG DO CHAT
+    </div>
+
+    <script>
+
+        let recognitionStatus = null;
+
+
+        const bc = new BroadcastChannel("activity")
+        bc.onmessage = async (event) => {
+            console.log('BRODCAST', event);
+            switch(event.data.command) {
+                case 'recognition_status':
+                    recognitionStatus = event.data.status; // active or disabled
+                    // TODO: ajustar interface
+                    document.getElementById('recognitionStatus').innerText = `Reconhecimento: ${event.data.status}`;
+                    document.getElementById('recognitionButton').innerHTML = recognitionStatus === 'active' ? 'Parar Reconhecimento' : 'Iniciar Reconhecimento'
+                    break;
+
+                case 'audio_status':
+                    document.getElementById('audioStatus').innerText = `Audio: ${event.data.status}`;
+                    break;
+            }
+        };
+
+
+        document.getElementById('recognitionButton').addEventListener('click', async () => {
+            console.log('recognitionButton');
+            // switch(recognitionStatus) {
+            //     case 'active':
+            //         break;
+            //     default:
+            // }
+            await (new BroadcastChannel("activity")).postMessage({
+                command: 'change_recognition',
+                status: recognitionStatus === 'active' ? 'stop' : 'start'
+            });
+        });
+        document.getElementById('pageRefreshButton').addEventListener('click', async () => {
+            console.log('pageRefreshButton');
+            await (new BroadcastChannel("activity")).postMessage({
+                command: 'page_refresh'
+            });
+        });
+        document.getElementById('contextResetButton').addEventListener('click', async () => {
+            console.log('contextResetButton');
+            await (new BroadcastChannel("activity")).postMessage({
+                command: 'context_reset'
+            });
+        });
+
+        document.getElementById('sendTextButton').addEventListener('click', async () => {
+            console.log('sendTextButton');
+            await (new BroadcastChannel("activity")).postMessage({
+                command: 'play_text',
+                text: document.getElementById('text').value
+            });
+        });
+        
+        document.getElementById('voiceSelect').addEventListener('change', async (e) => {
+            console.log('CHANGE', e.srcElement.value);
+            await (new BroadcastChannel("activity")).postMessage({
+                command: 'change_voice',
+                voiceId: e.srcElement.value
+            });
+            
+            // voiceSelect
+        });
+
+
+    </script>
+</body>
+</html>

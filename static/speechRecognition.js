@@ -7,14 +7,35 @@ const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
     console.log('BRODCAST', event);
     switch(event.data.command) {
+
         case 'context_reset':
-            break;
-        case 'inject_effect':
             break;
         case 'change_prompt':
             break;
         case 'change_voice':
             break;
+
+        case 'change_recognition':
+            switch(event.data.status) {
+                case 'stop':
+                    recognition.stop();
+                    break;
+                case 'start':
+                    recognition.start();
+                    break;
+            }
+        
+        case 'recognition_status':
+            switch(event.data.status) {
+                case 'stop':
+                    // recognition.stop();
+                    break;
+                case 'start':
+                    // recognition.start();
+                    break;
+            }
+            break;
+
         case 'audio_status':
             switch(event.data.status) {
                 case 'play':
@@ -28,7 +49,16 @@ bc.onmessage = async (event) => {
         case 'play_audio':
             // url
             break;
+        case 'play_text':
+            // await fetchElevenLabsAudio(event.data.text);
+            break;
+        case 'play_effect':
+            break;
+        case 'play_audio':
+            // url
+            break;
         case 'page_refresh':
+            window.location.reload();
             break;
         case 'audiofinished':
             // TODO: verificar se vai reiniciar reconhecimento
@@ -55,16 +85,24 @@ export function setupRecognition() {
     recognition.onresult = handleRecognitionResult;
 }
 
-function handleRecognitionStart() {
+async function handleRecognitionStart() {
     recognizing = true;
     recordButton.textContent = 'Stop Monitoring';
     console.log('Recognition started');
+    await bc.postMessage({
+        command: 'recognition_status',
+        status: 'active'
+    });
 }
 
-function handleRecognitionEnd() {
+async function handleRecognitionEnd() {
     recognizing = false;
     recordButton.textContent = 'Start Monitoring';
     console.log('Recognition ended');
+    await bc.postMessage({
+        command: 'recognition_status',
+        status: 'disabled'
+    });
     // if (!recordingStoppedByUser) {
     //     recognition.start(); // Restart recognition if stopped by system
     // }
@@ -95,15 +133,7 @@ function handleRecognitionResult(event) {
 
 
 const recordButton = document.getElementById('recordButton');
-const sendTextButton = document.getElementById('sendTextButton');
 
-sendTextButton.addEventListener('click', async () => {
-    console.log('sendTextButton');
-    await (new BroadcastChannel("activity")).postMessage({
-        command: 'play_text',
-        text: document.getElementById('text').value
-    });
-});
 recordButton.addEventListener('click', () => {
     if (recognizing) {
         recordingStoppedByUser = true;
