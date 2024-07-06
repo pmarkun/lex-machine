@@ -33,6 +33,14 @@ export function fetchElevenLabsAudio(text) {
     const wsUrl = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}`;
     const socket = new WebSocket(wsUrl);
 
+    let audioQueue = window.lex.audioQueue;
+    const audioContext = window.lex.audioContext;
+    const analyser = window.lex.analyser;
+    const canvas = window.lex.canvas;
+    const canvasCtx = window.lex.canvasCtx;
+    
+    setupOscilloscope(analyser, canvas, canvasCtx);
+    
     socket.onopen = () => {
         sendInitialMessages(socket);
         sendTextMessage(socket, text);
@@ -42,14 +50,6 @@ export function fetchElevenLabsAudio(text) {
     socket.onerror = (error) => console.error(`WebSocket Error: ${error}`);
     socket.onclose = (event) => handleSocketClose(event);
 
-
-    let audioQueue = [];
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const analyser = audioContext.createAnalyser();
-    const canvas = document.getElementById('oscilloscope');
-    const canvasCtx = canvas.getContext('2d');
-
-    setupOscilloscope(analyser, canvas, canvasCtx);
 }
 
 function sendInitialMessages(socket) {
