@@ -65,7 +65,7 @@ export async function fetchResponse(transcript) {
     console.log("Fetching Response..."); 
     let answer = await fetchVectorResponse(transcript);
     if (answer) {
-        console.log("Vector:" + resultText);
+        console.log("Vector:" + answer);
     }
     else {
         answer = await fetchOpenAIResponse();
