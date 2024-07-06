@@ -1,5 +1,6 @@
 import { ELEVENLABS_VOICE_ID, ELEVENLABS_API_KEY } from './config.js';
 
+let VOICE_ID = ELEVENLABS_VOICE_ID;
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
@@ -10,6 +11,7 @@ bc.onmessage = async (event) => {
         case 'change_prompt':
             break;
         case 'change_voice':
+            VOICE_ID = event.data.voiceId;
             break;
         case 'play_audio':
             // url
@@ -28,7 +30,7 @@ bc.onmessage = async (event) => {
 
 
 export function fetchElevenLabsAudio(text) {
-    const voiceId = ELEVENLABS_VOICE_ID;
+    const voiceId = VOICE_ID;
     const model = 'eleven_multilingual_v2';
     const wsUrl = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}`;
     const socket = new WebSocket(wsUrl);

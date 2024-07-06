@@ -15,6 +15,9 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
 
 // Endpoint for search queries
 app.post('/search', async (req, res) => {
