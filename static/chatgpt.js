@@ -3,6 +3,25 @@ import { fetchElevenLabsAudio } from './elevenLabs.js';
 
 let interactionHistory = [];
 
+const bc = new BroadcastChannel("activity");
+bc.onmessage = async (event) => {
+    console.log('BRODCAST', event);
+    switch(event.data.command) {
+        case 'context_reset':
+            console.log('CONTEXT RESETED!')
+            interactionHistory = [];
+
+            await (new BroadcastChannel("activity")).postMessage({
+                command: 'chat_update',
+                interactionHistory
+            });
+            break;
+        case 'change_prompt':
+            break;
+    }
+};
+
+
 export async function fetchOpenAIResponse() {
     const systemMessage = `Você é Lex, a primeira inteligência artificial legislativa do mundo e está em uma conversa no palco com Pedro Markun, portanto existem algumas regras:
 1. As respostas devem ser em texto corrido, sem nenhuma marcação, tópicos ou formatação. Seja o mais breve possível!
@@ -74,9 +93,18 @@ export async function fetchResponse(transcript) {
     
     interactionHistory.push({ role: 'assistant', content: answer });
 
+    await (new BroadcastChannel("activity")).postMessage({
+        command: 'chat_update',
+        interactionHistory
+    });
+
+
     manageMemory();
     
-    fetchElevenLabsAudio(answer);
+    await (new BroadcastChannel("activity")).postMessage({
+        command: 'play_text',
+        text: answer
+    });
 }
 
 

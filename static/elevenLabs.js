@@ -19,8 +19,6 @@ bc.onmessage = async (event) => {
         case 'play_text':
             await fetchElevenLabsAudio(event.data.text);
             break;
-        case 'play_effect':
-            break;
         case 'page_refresh':
             break;
         case 'audiofinished':

@@ -2,6 +2,7 @@ import { fetchResponse } from './chatgpt.js';
 import { SILENCE_THRESHOLD, LANG } from './config.js';
 
 
+let continuousConversation = false;
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
@@ -15,6 +16,10 @@ bc.onmessage = async (event) => {
         case 'change_voice':
             break;
 
+        case 'change_continuous':
+            continuousConversation = event.data.continuous;
+            break;
+    
         case 'change_recognition':
             switch(event.data.status) {
                 case 'stop':
@@ -42,7 +47,9 @@ bc.onmessage = async (event) => {
                     recognition.stop();
                     break;
                 case 'stop':
-                    recognition.start();
+                    if (continuousConversation) {
+                        recognition.start();
+                    }
                     break;
             }
             break;
@@ -50,9 +57,6 @@ bc.onmessage = async (event) => {
             // url
             break;
         case 'play_text':
-            // await fetchElevenLabsAudio(event.data.text);
-            break;
-        case 'play_effect':
             break;
         case 'play_audio':
             // url
