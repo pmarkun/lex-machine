@@ -1,3 +1,4 @@
 config.js
 node_modules
 .embeddings.cache.json
+package-lock.json
