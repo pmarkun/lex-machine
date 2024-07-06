@@ -7,8 +7,6 @@ bc.onmessage = async (event) => {
     switch(event.data.command) {
         case 'context_reset':
             break;
-        case 'inject_effect':
-            break;
         case 'change_prompt':
             break;
         case 'change_voice':
@@ -19,9 +17,11 @@ bc.onmessage = async (event) => {
         case 'play_text':
             await fetchElevenLabsAudio(event.data.text);
             break;
+        case 'play_effect':
+            break;
         case 'page_refresh':
             break;
-        case 'elevenlabs_audiofinished':
+        case 'audiofinished':
             break;
     }
 };
@@ -110,6 +110,10 @@ function handleSocketClose(event) {
 
 async function playAudioQueue(audioQueue, audioContext, analyser) {
     if (audioQueue.length > 0) {
+        await bc.postMessage({
+            command: 'audio_status',
+            status: 'play'
+        });
         const audioChunk = audioQueue[0];
         await audioContext.decodeAudioData(audioChunk, decodedBuffer => {
             const source = audioContext.createBufferSource();
@@ -126,9 +130,13 @@ async function playAudioQueue(audioQueue, audioContext, analyser) {
     } else {
         console.log('FIM AUDIO');
         // recognition.start();
-        bc.postMessage({ 
-            command: 'elevenlabs_audiofinished'
-        })
+        await bc.postMessage({
+            command: 'audio_status',
+            status: 'stop'
+        });
+        // bc.postMessage({ 
+        //     command: 'audiofinished'
+        // })
 
     }
 }

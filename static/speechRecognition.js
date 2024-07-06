@@ -1,6 +1,5 @@
 import { fetchResponse } from './chatgpt.js';
 import { SILENCE_THRESHOLD, LANG } from './config.js';
-import { fetchElevenLabsAudio } from './elevenLabs.js';
 
 
 
@@ -16,12 +15,22 @@ bc.onmessage = async (event) => {
             break;
         case 'change_voice':
             break;
+        case 'audio_status':
+            switch(event.data.status) {
+                case 'play':
+                    recognition.stop();
+                    break;
+                case 'stop':
+                    recognition.start();
+                    break;
+            }
+            break;
         case 'play_audio':
             // url
             break;
         case 'page_refresh':
             break;
-        case 'elevenlabs_audiofinished':
+        case 'audiofinished':
             // TODO: verificar se vai reiniciar reconhecimento
             recognition.start();
             break;
