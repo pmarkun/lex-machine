@@ -1,5 +1,32 @@
 import { ELEVENLABS_VOICE_ID, ELEVENLABS_API_KEY } from './config.js';
 
+
+const bc = new BroadcastChannel("activity");
+bc.onmessage = async (event) => {
+    console.log('BRODCAST', event);
+    switch(event.data.command) {
+        case 'context_reset':
+            break;
+        case 'inject_effect':
+            break;
+        case 'change_prompt':
+            break;
+        case 'change_voice':
+            break;
+        case 'play_audio':
+            // url
+            break;
+        case 'play_text':
+            await fetchElevenLabsAudio(event.data.text);
+            break;
+        case 'page_refresh':
+            break;
+        case 'elevenlabs_audiofinished':
+            break;
+    }
+};
+
+
 export function fetchElevenLabsAudio(text) {
     const voiceId = ELEVENLABS_VOICE_ID;
     const model = 'eleven_multilingual_v2';
@@ -13,6 +40,10 @@ export function fetchElevenLabsAudio(text) {
         sendTextMessage(socket, text);
         sendEndMessage(socket);
     };
+    socket.onmessage = (event) => handleSocketMessage(event, audioQueue, audioContext, analyser);
+    socket.onerror = (error) => console.error(`WebSocket Error: ${error}`);
+    socket.onclose = (event) => handleSocketClose(event);
+
 
     let audioQueue = [];
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -21,12 +52,6 @@ export function fetchElevenLabsAudio(text) {
     const canvasCtx = canvas.getContext('2d');
 
     setupOscilloscope(analyser, canvas, canvasCtx);
-
-    socket.onmessage = (event) => handleSocketMessage(event, audioQueue, audioContext, analyser);
-
-    socket.onerror = (error) => console.error(`WebSocket Error: ${error}`);
-
-    socket.onclose = (event) => handleSocketClose(event);
 }
 
 function sendInitialMessages(socket) {
@@ -53,6 +78,7 @@ function sendTextMessage(socket, text) {
 }
 
 function sendEndMessage(socket) {
+    console.log('END MESSAGE');
     const eosMessage = {
         text: ""
     };
@@ -84,21 +110,28 @@ function handleSocketClose(event) {
     }
 }
 
-function playAudioQueue(audioQueue, audioContext, analyser) {
+async function playAudioQueue(audioQueue, audioContext, analyser) {
     if (audioQueue.length > 0) {
         const audioChunk = audioQueue[0];
-        audioContext.decodeAudioData(audioChunk, decodedBuffer => {
+        await audioContext.decodeAudioData(audioChunk, decodedBuffer => {
             const source = audioContext.createBufferSource();
             source.buffer = decodedBuffer;
             source.connect(analyser);
             analyser.connect(audioContext.destination);
             source.start();
 
-            source.onended = () => {
+            source.onended = async () => {
                 audioQueue.shift();
-                playAudioQueue(audioQueue, audioContext, analyser);
+                await playAudioQueue(audioQueue, audioContext, analyser);
             };
         });
+    } else {
+        console.log('FIM AUDIO');
+        // recognition.start();
+        bc.postMessage({ 
+            command: 'elevenlabs_audiofinished'
+        })
+
     }
 }
 
