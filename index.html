@@ -25,9 +25,14 @@
     </style>
 </head>
 <body>
-    <button id="recordButton">Start Monitoring</button>
 
-    <canvas id="oscilloscope"></canvas>
+    <div id="fullscreen">
+
+        <button id="recordButton">Start Monitoring</button>
+
+        <canvas id="oscilloscope"></canvas>
+
+    </div>
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script type="module">
@@ -37,6 +42,38 @@
         import './static/elevenLabs.js';
 
         setupRecognition();
+
+
+
+
+        let wakeLock = null;
+
+        // Function that attempts to request a wake lock.
+        const requestWakeLock = async () => {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => {
+                console.log('Wake Lock was released');
+                });
+                console.log('Wake Lock is active');
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        };        
+
+
+        // requestWakeLock();
+
+        document.getElementById('fullscreen').addEventListener("click", e => {
+            console.log('container click')
+            requestWakeLock();
+            document.getElementById('fullscreen').requestFullscreen({
+                navigationUI: 'hide'
+
+            })
+
+        });
     </script>
+
 </body>
 </html>
