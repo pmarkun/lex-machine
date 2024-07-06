@@ -37,8 +37,10 @@ export async function playText(text) {
     switch(VOICE_ENGINE) {
         case 'local':
             await fetchLocalSynthesisAudio(text)
+            break;
         case 'elevenlabs':
             await fetchElevenLabsAudio(text)
+            break;
         default:
             console.log('erro!')
     }
