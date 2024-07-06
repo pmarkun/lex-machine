@@ -4,11 +4,9 @@ export function fetchElevenLabsAudio(text) {
     const voiceId = ELEVENLABS_VOICE_ID;
     const model = 'eleven_multilingual_v2';
     const wsUrl = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}`;
-    console.log("aa")
     const socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
-        console.log("abrindo soquete")
         sendInitialMessages(socket);
         sendTextMessage(socket, text);
         sendEndMessage(socket);

@@ -1,4 +1,4 @@
-import { fetchOpenAIResponse } from './chatgpt.js';
+import { fetchResponse } from './chatgpt.js';
 import { SILENCE_THRESHOLD, LANG } from './config.js';
 
 const recordButton = document.getElementById('recordButton');
@@ -37,7 +37,7 @@ function handleRecognitionResult(event) {
     clearTimeout(silenceTimeout);
     const transcript = event.results[event.results.length - 1][0].transcript;
     console.log(`Transcription: ${transcript}`);
-    fetchOpenAIResponse(transcript);
+    fetchResponse(transcript);
 
     silenceTimeout = setTimeout(() => {
         recognition.stop(); // Stop recognition after silence
