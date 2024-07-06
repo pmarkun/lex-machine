@@ -21,11 +21,11 @@ const loadData = async () => {
   }
 };
 
-const searchQuery = async (query, num = 1) => {
+const searchQuery = async (query, num = 1, threshold = 0.25) => {
   if (!db) {
     throw new Error('Database is not initialized');
   }
-  return await db.search(query, num);
+  return await db.search(query, num, threshold);
 };
 
 module.exports = {
