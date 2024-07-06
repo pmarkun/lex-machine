@@ -1,6 +1,9 @@
-import { ELEVENLABS_VOICE_ID, ELEVENLABS_API_KEY } from './config.js';
+import { ELEVENLABS_VOICE_ID, ELEVENLABS_API_KEY, VOICE_ENGINE } from './config.js';
 
 let VOICE_ID = ELEVENLABS_VOICE_ID;
+let color = 'blue';
+
+
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
@@ -17,15 +20,70 @@ bc.onmessage = async (event) => {
             // url
             break;
         case 'play_text':
-            await fetchElevenLabsAudio(event.data.text);
+            await playText(event.data.text);
             break;
         case 'page_refresh':
             break;
         case 'audiofinished':
             break;
-    }
+        case 'recognition_status':
+            color = event.data.status === 'active' ? 'red' : 'lime'
+            break;
+        }
 };
 
+
+export async function playText(text) {
+    switch(VOICE_ENGINE) {
+        case 'local':
+            await fetchLocalSynthesisAudio(text)
+        case 'elevenlabs':
+            await fetchElevenLabsAudio(text)
+        default:
+            console.log('erro!')
+    }
+}
+
+export function fetchLocalSynthesisAudio(text) {
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    const audioContext = window.lex.audioContext;
+    const analyser = createFakeAnalyser(audioContext);;
+    const canvas = window.lex.canvas;
+    const canvasCtx = window.lex.canvasCtx;
+
+    setupOscilloscope(analyser, canvas, canvasCtx);
+
+    // Inicia a síntese de fala
+    utterance.onstart = async () => {
+        console.log("Starting TTS with Web Speech Synthesis API");
+        analyser.setSpeakingState = true;
+        await bc.postMessage({
+            command: 'audio_status',
+            status: 'play'
+        });
+    };
+
+    utterance.onend = async () => {
+        console.log('Synthesis finished');
+        analyser.setSpeakingState = false;
+        await bc.postMessage({
+            command: 'audio_status',
+            status: 'stop'
+        });
+
+    };
+
+    utterance.onerror = (error) => {
+        console.error(`SpeechSynthesis Error: ${error}`);
+        analyser.setSpeakingState = false;
+
+    };
+
+  
+    synth.speak(utterance);
+}
 
 export function fetchElevenLabsAudio(text) {
     const voiceId = VOICE_ID;
@@ -33,6 +91,14 @@ export function fetchElevenLabsAudio(text) {
     const wsUrl = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}`;
     const socket = new WebSocket(wsUrl);
 
+    let audioQueue = window.lex.audioQueue;
+    const audioContext = window.lex.audioContext;
+    const analyser = window.lex.analyser;
+    const canvas = window.lex.canvas;
+    const canvasCtx = window.lex.canvasCtx;
+    
+    setupOscilloscope(analyser, canvas, canvasCtx);
+    
     socket.onopen = () => {
         sendInitialMessages(socket);
         sendTextMessage(socket, text);
@@ -42,14 +108,6 @@ export function fetchElevenLabsAudio(text) {
     socket.onerror = (error) => console.error(`WebSocket Error: ${error}`);
     socket.onclose = (event) => handleSocketClose(event);
 
-
-    let audioQueue = [];
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const analyser = audioContext.createAnalyser();
-    const canvas = document.getElementById('oscilloscope');
-    const canvasCtx = canvas.getContext('2d');
-
-    setupOscilloscope(analyser, canvas, canvasCtx);
 }
 
 function sendInitialMessages(socket) {
@@ -141,6 +199,35 @@ async function playAudioQueue(audioQueue, audioContext, analyser) {
     }
 }
 
+function createFakeAnalyser() {
+    let phase = 0;
+    let speaking = false;
+
+    return {
+        fftSize: 2048,
+        getByteTimeDomainData: function (array) {
+            if (speaking) {
+                const frequency = 0.05; // Controla a velocidade da onda
+                const amplitude = 128;  // Controla a amplitude da onda
+                for (let i = 0; i < array.length; i++) {
+                    array[i] = Math.sin((i + phase) * frequency) * amplitude + amplitude;
+                }
+                phase += 1; // Incrementa a fase para criar movimento
+            } else {
+                for (let i = 0; i < array.length; i++) {
+                    array[i] = 128; // Valor médio para uma linha reta
+                }
+            }
+        },
+        connect: function() {},
+        disconnect: function() {},
+        setSpeakingState: function(state) {
+            speaking = state;
+        }
+    };
+}
+
+
 function setupOscilloscope(analyser, canvas, canvasCtx) {
     analyser.fftSize = 2048;
     const bufferLength = analyser.fftSize;
@@ -149,6 +236,7 @@ function setupOscilloscope(analyser, canvas, canvasCtx) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -163,7 +251,7 @@ function setupOscilloscope(analyser, canvas, canvasCtx) {
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
         canvasCtx.lineWidth = 2;
-        canvasCtx.strokeStyle = 'lime';
+        canvasCtx.strokeStyle = color;
 
         canvasCtx.beginPath();
 

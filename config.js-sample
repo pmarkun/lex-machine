@@ -3,3 +3,4 @@ export const ELEVENLABS_API_KEY = 'elevenlabs key';
 export const ELEVENLABS_VOICE_ID = 'voice id';
 export const SILENCE_THRESHOLD = 5000; // 5 seconds
 export const LANG = 'pt-BR';
+export const VOICE_ENGINE='local' // or 'elevenlabs'
