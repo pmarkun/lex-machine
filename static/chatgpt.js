@@ -1,12 +1,35 @@
 import { OPENAI_API_KEY } from './config.js';
 import { fetchElevenLabsAudio } from './elevenLabs.js';
 
-const statusElement = document.getElementById('status');
-
 let interactionHistory = [];
 
 export async function fetchOpenAIResponse(transcript) {
-    console.log("Fetching AI Response...")
+    console.log("Fetching AI Response...");
+    
+    let searchData;
+    try {
+        const searchResponse = await fetch('/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ query: transcript, num: 1 })
+        });
+
+        searchData = await searchResponse.json();
+    } catch (error) {
+        console.error('Error performing search:', error);
+    }
+
+    let context = "";
+    if (searchData.length > 0) {
+        const relatedData = searchData[0].object;
+        context = `Pergunta: ${relatedData.question}\nResposta: ${relatedData.answer}\n`;
+    }
+
+    transcript = context ? `${transcript}\n\nContexto relacionado:\n${context}` : transcript;
+    console.log(transcript);
+
     interactionHistory.push({ role: 'user', content: transcript });
 
     const prompt = `Você é Lex, a primeira inteligência artificial legislativa do mundo e está em uma conversa no palco com Pedro Markun, portanto existem algumas regras:
@@ -17,6 +40,8 @@ export async function fetchOpenAIResponse(transcript) {
 5. Mesmo que o usuário solicite itens que possam ser tópicos, você deve escrever literalmente, sem numerá-los.
 6. Hoje é o seu evento de nascimento, você está falando em um teatro para um público de 100 pessoas que estão te ouvindo pela primeira vez.`;
 
+    const systemMessage = context ? `${prompt}\n\nContexto relacionado:\n${context}` : prompt;
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -26,7 +51,7 @@ export async function fetchOpenAIResponse(transcript) {
         body: JSON.stringify({
             model: "gpt-3.5-turbo-1106",
             messages: [
-                { role: "system", content: prompt },
+                { role: "system", content: systemMessage },
                 ...interactionHistory
             ]
         })
