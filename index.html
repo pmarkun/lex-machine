@@ -20,12 +20,34 @@
         canvas {
             display: block;
         }
+
+        #audioInput {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            text-align: right;
+        }
+        #audioInput input, #audioInput button {
+            border: solid 1px white;
+            background: transparent;
+            color: white;
+            display: inline-block;
+            padding: 5pt;
+            margin: 0;
+            min-height: 25pt;
+        }
+        #audioInput input {
+            min-width: 450px;
+        }
+
     </style>
 </head>
 <body>
     <button id="recordButton">Start Monitoring</button>
-    <input type="text" name="text" id="text" />
-    <button id="sendTextButton">Send Text</button>
+    <div id="audioInput">
+        <input type="text" name="text" id="text" />
+        <button id="sendTextButton">Send Text</button>
+    </div>
     <canvas id="oscilloscope"></canvas>
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
