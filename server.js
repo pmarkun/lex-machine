@@ -19,6 +19,9 @@ app.get('/', (req, res) => {
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
+app.get('/nfc', (req, res) => {
+  res.sendFile(path.join(__dirname, 'nfc.html'));
+});
 
 // Endpoint for search queries
 app.post('/tools/vectorSearch', async (req, res) => {

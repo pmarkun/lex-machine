@@ -1,11 +1,14 @@
 import { OPENAI_API_KEY } from './config.js';
+import { PROMPTS } from './prompts.js';
+
 import { toolDefinitions, toolResponse } from "./tools.js";
 
 let interactionHistory = [];
+let systemMessage = PROMPTS.default.prompt;
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
-    console.log('BRODCAST', event);
+    // console.log('BRODCAST', event);
     switch(event.data.command) {
         case 'context_reset':
             console.log('CONTEXT RESETED!')
@@ -16,21 +19,31 @@ bc.onmessage = async (event) => {
                 interactionHistory
             });
             break;
+
         case 'change_prompt':
+            console.log('CHANGE PROMPT', event.data);
+            switch(event.data.promptId) {
+                case 'custom':
+                    systemMessage = event.data.prompt;
+                    break;
+                default:
+                    const prompt = PROMPTS[event.data.promptId];
+                    systemMessage = prompt.prompt;
+                    if (prompt.voiceId) {
+                        console.log('CHANGING VOICE to', prompt.voiceId);
+                        await (new BroadcastChannel("activity")).postMessage({
+                            command: 'change_voice',
+                            voiceId: prompt.voiceId
+                        });
+                    }
+            }
             break;
     }
 };
 
 
 export async function fetchOpenAIResponse() {
-    const systemMessage = `Você é Lex, a primeira inteligência artificial legislativa do mundo e está em uma conversa no palco com Pedro Markun, portanto existem algumas regras:
-1. As respostas devem ser em texto corrido, sem nenhuma marcação, tópicos ou formatação. Seja o mais breve possível!
-2. Foque em respostas breves com um tom amigável e curioso.
-3. Não use negrito, emojis ou outras marcações de texto.
-4. Use as informações abaixo para contextualizar as respostas.
-5. Mesmo que o usuário solicite itens que possam ser tópicos, você deve escrever literalmente, sem numerá-los.
-6. Hoje é o seu evento de nascimento, você está falando em um teatro para um público de 100 pessoas que estão te ouvindo pela primeira vez.`;
-
+   
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {

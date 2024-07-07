@@ -1,7 +1,7 @@
 import { ELEVENLABS_VOICE_ID, ELEVENLABS_API_KEY, VOICE_ENGINE } from './config.js';
 
 let VOICE_ID = ELEVENLABS_VOICE_ID;
-let color = 'blue';
+
 
 
 
@@ -26,8 +26,13 @@ bc.onmessage = async (event) => {
             break;
         case 'audiofinished':
             break;
+        case 'audio_status':
+            console.log('AUDIO STATUS', event.data.status);
+           
+            break;
+    
         case 'recognition_status':
-            color = event.data.status === 'active' ? 'red' : 'lime'
+            window.lex.color = event.data.status === 'active' ? 'red' : 'black'
             break;
         }
 };
@@ -49,12 +54,12 @@ export async function playText(text) {
 export function fetchLocalSynthesisAudio(text) {
     const synth = window.speechSynthesis;
     const audioContext = window.lex.audioContext;
-    const analyser = createFakeAnalyser(audioContext);
+    const analyser = window.lex.analyser; // createFakeAnalyser(audioContext);
     const canvas = window.lex.canvas;
     const canvasCtx = window.lex.canvasCtx;
 
     setupOscilloscope(analyser, canvas, canvasCtx);
-
+    
     // Dividir o texto em frases
     const sentences = text.split('.').map(sentence => sentence.trim()).filter(sentence => sentence.length > 0);
     let currentSentenceIndex = 0;
@@ -66,6 +71,7 @@ export function fetchLocalSynthesisAudio(text) {
             utterance.onstart = async () => {
                 console.log("Starting TTS with Web Speech Synthesis API");
                 analyser.setSpeakingState = true;
+                window.lex.isPlaying = true;
                 await bc.postMessage({
                     command: 'audio_status',
                     status: 'play'
@@ -75,6 +81,7 @@ export function fetchLocalSynthesisAudio(text) {
             utterance.onend = async () => {
                 console.log('Synthesis finished');
                 analyser.setSpeakingState = false;
+                window.lex.isPlaying = false;
                 await bc.postMessage({
                     command: 'audio_status',
                     status: 'stop'
@@ -206,6 +213,7 @@ function handleSocketClose(event) {
 
 async function playAudioQueue(audioQueue, audioContext, analyser) {
     if (audioQueue.length > 0) {
+        window.lex.isPlaying = true;
         await bc.postMessage({
             command: 'audio_status',
             status: 'play'
@@ -226,14 +234,11 @@ async function playAudioQueue(audioQueue, audioContext, analyser) {
     } else {
         console.log('FIM AUDIO');
         // recognition.start();
+        window.lex.isPlaying = false;
         await bc.postMessage({
             command: 'audio_status',
             status: 'stop'
         });
-        // bc.postMessage({ 
-        //     command: 'audiofinished'
-        // })
-
     }
 }
 
@@ -265,7 +270,6 @@ function createFakeAnalyser() {
     };
 }
 
-
 function setupOscilloscope(analyser, canvas, canvasCtx) {
     analyser.fftSize = 2048;
     const bufferLength = analyser.fftSize;
@@ -274,7 +278,6 @@ function setupOscilloscope(analyser, canvas, canvasCtx) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -283,34 +286,42 @@ function setupOscilloscope(analyser, canvas, canvasCtx) {
     function draw() {
         requestAnimationFrame(draw);
 
-        analyser.getByteTimeDomainData(dataArray);
+        // console.log('DATA-ARRAY 1', dataArray);
+        // analyser.getByteFrequencyData(dataArray);
+        const { canvas, canvasCtx, isPlaying, color } = window.lex;
 
-        canvasCtx.fillStyle = 'black';
-        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+        if (isPlaying) {
+            analyser.getByteTimeDomainData(dataArray); // antigo
+            // console.log('DATA-ARRAY', dataArray);
 
-        canvasCtx.lineWidth = 2;
-        canvasCtx.strokeStyle = color;
+            canvasCtx.fillStyle = "rgba(0, 0, 0, 0.2)";
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
-        canvasCtx.beginPath();
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = 'lime'; // forçada cor aqui
 
-        const sliceWidth = canvas.width * 1.0 / bufferLength;
-        let x = 0;
+            canvasCtx.beginPath();
 
-        for (let i = 0; i < bufferLength; i++) {
-            const v = dataArray[i] / 128.0;
-            const y = v * canvas.height / 2;
+            const sliceWidth = canvas.width * 1.0 / bufferLength;
+            let x = 0;
 
-            if (i === 0) {
-                canvasCtx.moveTo(x, y);
-            } else {
-                canvasCtx.lineTo(x, y);
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * canvas.height / 2;
+
+                if (i === 0) {
+                    canvasCtx.moveTo(x, y);
+                } else {
+                    canvasCtx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
             }
 
-            x += sliceWidth;
+            canvasCtx.lineTo(canvas.width, canvas.height / 2);
+            canvasCtx.stroke();
         }
 
-        canvasCtx.lineTo(canvas.width, canvas.height / 2);
-        canvasCtx.stroke();
     }
 
     draw();
