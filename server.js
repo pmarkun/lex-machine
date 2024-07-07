@@ -48,7 +48,7 @@ app.post('/tools/cmspAnalyzeProject', async (req, res) => {
   try {
     const analysis = await cmspAnalyzeProject(tipo, ano, numero);
     if (analysis) {
-      res.send(analysis);
+      res.send({ "answer" : analysis});
     } else {
       res.status(404).send({ error: 'Projeto não encontrado' });
     }

@@ -56,18 +56,20 @@ export async function fetchOpenAIResponse() {
                 { role: "system", content: systemMessage },
                 ...interactionHistory
             ],
-            //tools: toolDefinitions,
-            //tool_choice: "auto"
+            tools: toolDefinitions,
+            tool_choice: "auto"
         })
     });
     const data = await response.json();
-    console.log(data);
-    if (data.choices[0].tool_call) {
-        const { tool_name, parameters } = data.choices[0].tool_call;
+    if (data.choices[0].message.tool_calls) {
+        const tool_name = data.choices[0].message.tool_calls[0].function.name;
+        const parameters = data.choices[0].message.tool_calls[0].function.arguments;
         const toolResult = await toolResponse(tool_name, parameters);
-        return toolResult;
+        const resultText = await toolResult.json()
+        return resultText.answer;
     } else {
         const resultText = data.choices[0].message.content;
+        console.log(resultText);
         return resultText;
     }
 }
