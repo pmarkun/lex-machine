@@ -48,43 +48,54 @@ export async function playText(text) {
 
 export function fetchLocalSynthesisAudio(text) {
     const synth = window.speechSynthesis;
-    const utterance = new SpeechSynthesisUtterance(text);
-
     const audioContext = window.lex.audioContext;
-    const analyser = createFakeAnalyser(audioContext);;
+    const analyser = createFakeAnalyser(audioContext);
     const canvas = window.lex.canvas;
     const canvasCtx = window.lex.canvasCtx;
 
     setupOscilloscope(analyser, canvas, canvasCtx);
 
-    // Inicia a síntese de fala
-    utterance.onstart = async () => {
-        console.log("Starting TTS with Web Speech Synthesis API");
-        analyser.setSpeakingState = true;
-        await bc.postMessage({
-            command: 'audio_status',
-            status: 'play'
-        });
+    // Dividir o texto em frases
+    const sentences = text.split('.').map(sentence => sentence.trim()).filter(sentence => sentence.length > 0);
+    let currentSentenceIndex = 0;
+
+    const speakNextSentence = () => {
+        if (currentSentenceIndex < sentences.length) {
+            const utterance = new SpeechSynthesisUtterance(sentences[currentSentenceIndex]);
+
+            utterance.onstart = async () => {
+                console.log("Starting TTS with Web Speech Synthesis API");
+                analyser.setSpeakingState = true;
+                await bc.postMessage({
+                    command: 'audio_status',
+                    status: 'play'
+                });
+            };
+
+            utterance.onend = async () => {
+                console.log('Synthesis finished');
+                analyser.setSpeakingState = false;
+                await bc.postMessage({
+                    command: 'audio_status',
+                    status: 'stop'
+                });
+
+                // Fala a próxima frase
+                currentSentenceIndex++;
+                speakNextSentence();
+            };
+
+            utterance.onerror = (error) => {
+                console.error(`SpeechSynthesis Error: ${error}`);
+                analyser.setSpeakingState = false;
+            };
+
+            synth.speak(utterance);
+        }
     };
 
-    utterance.onend = async () => {
-        console.log('Synthesis finished');
-        analyser.setSpeakingState = false;
-        await bc.postMessage({
-            command: 'audio_status',
-            status: 'stop'
-        });
-
-    };
-
-    utterance.onerror = (error) => {
-        console.error(`SpeechSynthesis Error: ${error}`);
-        analyser.setSpeakingState = false;
-
-    };
-
-  
-    synth.speak(utterance);
+    // Começa a falar a primeira frase
+    speakNextSentence();
 }
 
 export function fetchElevenLabsAudio(text) {
