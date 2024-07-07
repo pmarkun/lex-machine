@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC</title>
+    <script>
+        async function readTag() {
+            if ("NDEFReader" in window) {
+                const ndef = new NDEFReader();
+                try {
+                    await ndef.scan();
+                    ndef.onreading = event => {
+                        const decoder = new TextDecoder();
+                        for (const record of event.message.records) {
+                            consoleLog("Record type:  " + record.recordType);
+                            consoleLog("MIME type:    " + record.mediaType);
+                            consoleLog("=== data ===\n" + decoder.decode(record.data));
+                        }
+                    }
+                } catch(error) {
+                    consoleLog(error);
+                }
+            } else {
+                consoleLog("Web NFC is not supported.");
+            }
+        }
+
+        async function writeTag() {
+            if ("NDEFReader" in window) {
+                const ndef = new NDEFReader();
+                try {
+                    await ndef.write({
+                        records: [{ recordType: "url", data: "http://wa.me/5511983370955" }],
+                    });
+                    consoleLog("NDEF message written!");
+                } catch(error) {
+                    consoleLog(error);
+                }
+            } else {
+                consoleLog("Web NFC is not supported.");
+            }
+        }
+
+        function consoleLog(data) {
+            var logElement = document.getElementById('log');
+            logElement.innerHTML += data + '\n';
+        };
+    </script>
+</head>
+<body>
+    <p>
+        <button onclick="readTag()">Test NFC Read</button>
+        <button onclick="writeTag()">Test NFC Write</button>
+    </p>
+      
+    <pre id="log">
+
+    </pre>
+    
+    
+    
+    
+    <p><small>Based on the code snippets from <a href="https://w3c.github.io/web-nfc/#examples">specification draft</a>.</small></p>
+    
+</body>
+</html>
