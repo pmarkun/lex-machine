@@ -10,7 +10,7 @@ const loadData = async () => {
     const { default: VectorDB } = await import('@themaximalist/vectordb.js');
     db = new VectorDB({});
 
-    const data = await fs.readFile(path.join(__dirname, 'data', 'data.json'), 'utf8');
+    const data = await fs.readFile(path.join(__dirname, '../data', 'data.json'), 'utf8');
     const questions = JSON.parse(data);
     for (const item of questions) {
       await db.add(item.question, item);

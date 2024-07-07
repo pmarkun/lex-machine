@@ -1,5 +1,5 @@
 import { OPENAI_API_KEY } from './config.js';
-import { fetchElevenLabsAudio } from './elevenLabs.js';
+import { toolDefinitions, toolResponse } from "./tools.js";
 
 let interactionHistory = [];
 
@@ -42,19 +42,27 @@ export async function fetchOpenAIResponse() {
             messages: [
                 { role: "system", content: systemMessage },
                 ...interactionHistory
-            ]
+            ],
+            //tools: toolDefinitions,
+            //tool_choice: "auto"
         })
     });
-    
     const data = await response.json();
-    const resultText = data.choices[0].message.content;
-    return resultText;
+    console.log(data);
+    if (data.choices[0].tool_call) {
+        const { tool_name, parameters } = data.choices[0].tool_call;
+        const toolResult = await toolResponse(tool_name, parameters);
+        return toolResult;
+    } else {
+        const resultText = data.choices[0].message.content;
+        return resultText;
+    }
 }
 
 export async function fetchVectorResponse(input) {
     let searchData;
     try {
-        const searchResponse = await fetch('/search', {
+        const searchResponse = await fetch('tools/vectorSearch', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
