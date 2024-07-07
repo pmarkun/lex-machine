@@ -101,7 +101,8 @@ export function fetchLocalSynthesisAudio(text) {
 export function fetchElevenLabsAudio(text) {
     const voiceId = VOICE_ID;
     const model = 'eleven_multilingual_v2';
-    const wsUrl = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}`;
+    const wsUrl = `wss://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream-input?model_id=${model}&optimize_streaming_latency
+=3`;
     const socket = new WebSocket(wsUrl);
 
     let audioQueue = window.lex.audioQueue;
@@ -137,13 +138,37 @@ function sendInitialMessages(socket) {
     socket.send(JSON.stringify(bosMessage));
 }
 
-function sendTextMessage(socket, text) {
-    const textMessage = {
-        text: text,
-        try_trigger_generation: true,
-    };
+async function* textChunker(chunks) {
+    const splitters = [".", ",", "?", "!", ";", ":", "—", "-", "(", ")", "[", "]", "}", " "];
+    let buffer = "";
 
-    socket.send(JSON.stringify(textMessage));
+    for await (const text of chunks) {
+        if (splitters.includes(buffer.slice(-1))) {
+            yield buffer + " ";
+            buffer = text;
+        } else if (splitters.includes(text[0])) {
+            yield buffer + text[0] + " ";
+            buffer = text.slice(1);
+        } else {
+            buffer += text;
+        }
+    }
+
+    if (buffer) {
+        yield buffer + " ";
+    }
+}
+
+async function sendTextMessage(socket, text) {
+    for (textChunk in textChunker(text)) {
+        const textMessage = {
+            text: textChunk,
+            try_trigger_generation: true,
+        };
+
+        await socket.send(JSON.stringify(textMessage));
+    }
+        
 }
 
 function sendEndMessage(socket) {
