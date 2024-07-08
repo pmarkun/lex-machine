@@ -1,3 +1,4 @@
+import { setupOscilloscope } from './sketch.js';
 import { ELEVENLABS_VOICE_ID, ELEVENLABS_API_KEY, VOICE_ENGINE } from './config.js';
 
 let VOICE_ID = ELEVENLABS_VOICE_ID;
@@ -54,11 +55,10 @@ export async function playText(text) {
 export function fetchLocalSynthesisAudio(text) {
     const synth = window.speechSynthesis;
     const audioContext = window.lex.audioContext;
-    const analyser = window.lex.analyser; // createFakeAnalyser(audioContext);
     const canvas = window.lex.canvas;
     const canvasCtx = window.lex.canvasCtx;
 
-    setupOscilloscope(analyser, canvas, canvasCtx);
+    setupOscilloscope(audioContext, source);
     
     // Dividir o texto em frases
     const sentences = text.split('.').map(sentence => sentence.trim()).filter(sentence => sentence.length > 0);
@@ -70,7 +70,6 @@ export function fetchLocalSynthesisAudio(text) {
 
             utterance.onstart = async () => {
                 console.log("Starting TTS with Web Speech Synthesis API");
-                analyser.setSpeakingState = true;
                 window.lex.isPlaying = true;
                 await bc.postMessage({
                     command: 'audio_status',
@@ -80,7 +79,6 @@ export function fetchLocalSynthesisAudio(text) {
 
             utterance.onend = async () => {
                 console.log('Synthesis finished');
-                analyser.setSpeakingState = false;
                 window.lex.isPlaying = false;
                 await bc.postMessage({
                     command: 'audio_status',
@@ -94,7 +92,6 @@ export function fetchLocalSynthesisAudio(text) {
 
             utterance.onerror = (error) => {
                 console.error(`SpeechSynthesis Error: ${error}`);
-                analyser.setSpeakingState = false;
             };
 
             synth.speak(utterance);
@@ -113,19 +110,22 @@ export function fetchElevenLabsAudio(text) {
     const socket = new WebSocket(wsUrl);
 
     let audioQueue = window.lex.audioQueue;
-    const audioContext = window.lex.audioContext;
-    const analyser = window.lex.analyser;
-    const canvas = window.lex.canvas;
-    const canvasCtx = window.lex.canvasCtx;
-    
-    setupOscilloscope(analyser, canvas, canvasCtx);
+    const audioCtx = window.lex.audioContext;
+    const source = audioCtx.createBufferSource();
+
+
+    let oscilloscope = setupOscilloscope(audioCtx, source);
     
     socket.onopen = () => {
         sendInitialMessages(socket);
-        sendTextMessage(socket, text);
+        let sentences = text.split('.');
+        console.log(sentences)
+        for (let sentence of sentences) {
+            sendTextMessage(socket, sentence);     
+        }
         sendEndMessage(socket);
     };
-    socket.onmessage = (event) => handleSocketMessage(event, audioQueue, audioContext, analyser);
+    socket.onmessage = (event) => handleSocketMessage(event, audioQueue, audioCtx, oscilloscope);
     socket.onerror = (error) => console.error(`WebSocket Error: ${error}`);
     socket.onclose = (event) => handleSocketClose(event);
 
@@ -145,37 +145,12 @@ function sendInitialMessages(socket) {
     socket.send(JSON.stringify(bosMessage));
 }
 
-async function* textChunker(chunks) {
-    const splitters = [".", ",", "?", "!", ";", ":", "—", "-", "(", ")", "[", "]", "}", " "];
-    let buffer = "";
-
-    for await (const text of chunks) {
-        if (splitters.includes(buffer.slice(-1))) {
-            yield buffer + " ";
-            buffer = text;
-        } else if (splitters.includes(text[0])) {
-            yield buffer + text[0] + " ";
-            buffer = text.slice(1);
-        } else {
-            buffer += text;
-        }
-    }
-
-    if (buffer) {
-        yield buffer + " ";
-    }
-}
-
 async function sendTextMessage(socket, text) {
-    for (textChunk in textChunker(text)) {
-        const textMessage = {
-            text: textChunk,
-            try_trigger_generation: true,
-        };
-
-        await socket.send(JSON.stringify(textMessage));
-    }
-        
+    const textMessage = {
+        text: text,
+        try_trigger_generation: true,
+    };
+    socket.send(JSON.stringify(textMessage));
 }
 
 function sendEndMessage(socket) {
@@ -187,19 +162,20 @@ function sendEndMessage(socket) {
     socket.send(JSON.stringify(eosMessage));
 }
 
-function handleSocketMessage(event, audioQueue, audioContext, analyser) {
+function handleSocketMessage(event, audioQueue, audioCtx, oscilloscope) {
     const response = JSON.parse(event.data);
+    console.log(response);
 
     if (response.audio) {
         const audioChunk = Uint8Array.from(atob(response.audio), c => c.charCodeAt(0)).buffer;
         audioQueue.push(audioChunk);
         if (audioQueue.length === 1) {
-            playAudioQueue(audioQueue, audioContext, analyser);
+            playAudioQueue(audioQueue, audioCtx, oscilloscope);
         }
     }
 
     if (response.isFinal) {
-        event.target.close();
+        //event.target.close();
     }
 }
 
@@ -211,7 +187,7 @@ function handleSocketClose(event) {
     }
 }
 
-async function playAudioQueue(audioQueue, audioContext, analyser) {
+async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
     if (audioQueue.length > 0) {
         window.lex.isPlaying = true;
         await bc.postMessage({
@@ -219,16 +195,16 @@ async function playAudioQueue(audioQueue, audioContext, analyser) {
             status: 'play'
         });
         const audioChunk = audioQueue[0];
-        await audioContext.decodeAudioData(audioChunk, decodedBuffer => {
-            const source = audioContext.createBufferSource();
+        await audioCtx.decodeAudioData(audioChunk, decodedBuffer => {
+            let source = audioCtx.createBufferSource();
             source.buffer = decodedBuffer;
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
             source.start();
+            oscilloscope.connectSource(source);
+            
 
             source.onended = async () => {
                 audioQueue.shift();
-                await playAudioQueue(audioQueue, audioContext, analyser);
+                await playAudioQueue(audioQueue, audioCtx, oscilloscope);
             };
         });
     } else {
@@ -242,87 +218,3 @@ async function playAudioQueue(audioQueue, audioContext, analyser) {
     }
 }
 
-function createFakeAnalyser() {
-    let phase = 0;
-    let speaking = false;
-
-    return {
-        fftSize: 2048,
-        getByteTimeDomainData: function (array) {
-            if (speaking) {
-                const frequency = 0.05; // Controla a velocidade da onda
-                const amplitude = 128;  // Controla a amplitude da onda
-                for (let i = 0; i < array.length; i++) {
-                    array[i] = Math.sin((i + phase) * frequency) * amplitude + amplitude;
-                }
-                phase += 1; // Incrementa a fase para criar movimento
-            } else {
-                for (let i = 0; i < array.length; i++) {
-                    array[i] = 128; // Valor médio para uma linha reta
-                }
-            }
-        },
-        connect: function() {},
-        disconnect: function() {},
-        setSpeakingState: function(state) {
-            speaking = state;
-        }
-    };
-}
-
-function setupOscilloscope(analyser, canvas, canvasCtx) {
-    analyser.fftSize = 2048;
-    const bufferLength = analyser.fftSize;
-    const dataArray = new Uint8Array(bufferLength);
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
-
-    function draw() {
-        requestAnimationFrame(draw);
-
-        // console.log('DATA-ARRAY 1', dataArray);
-        // analyser.getByteFrequencyData(dataArray);
-        const { canvas, canvasCtx, isPlaying, color } = window.lex;
-
-        if (isPlaying) {
-            analyser.getByteTimeDomainData(dataArray); // antigo
-            // console.log('DATA-ARRAY', dataArray);
-
-            canvasCtx.fillStyle = "rgba(0, 0, 0, 0.2)";
-            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-            canvasCtx.lineWidth = 2;
-            canvasCtx.strokeStyle = 'lime'; // forçada cor aqui
-
-            canvasCtx.beginPath();
-
-            const sliceWidth = canvas.width * 1.0 / bufferLength;
-            let x = 0;
-
-            for (let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * canvas.height / 2;
-
-                if (i === 0) {
-                    canvasCtx.moveTo(x, y);
-                } else {
-                    canvasCtx.lineTo(x, y);
-                }
-
-                x += sliceWidth;
-            }
-
-            canvasCtx.lineTo(canvas.width, canvas.height / 2);
-            canvasCtx.stroke();
-        }
-
-    }
-
-    draw();
-}
