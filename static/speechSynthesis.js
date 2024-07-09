@@ -28,9 +28,7 @@ export class Lex {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const source = audioCtx.createMediaStreamSource(stream);
 
-                // Configura o AnalyserNode (por exemplo, tamanho da FFT, suavização, etc.)
-                const { canvas, canvasCtx, isPlaying, color } = window.lex;
-                 // Inicia a visualização
+                // Inicia a visualização
         
                 setupOscilloscope(audioCtx, source);
                 

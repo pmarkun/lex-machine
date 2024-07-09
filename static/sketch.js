@@ -81,7 +81,6 @@ export function setupOscilloscope(audioCtx, source) {
      let canvas = document.getElementById("oscilloscope");
      const canvasCtx = canvas.getContext('2d');
      
-     
      let smallerSide;
 
      function resize() {
@@ -137,6 +136,7 @@ export function setupOscilloscope(audioCtx, source) {
 
  
     function draw() {
+        let isPlaying = window.lex.isPlaying;
         requestAnimationFrame(draw);
 
         lowAnalyzer.getByteFrequencyData(lowFrequencyData);
@@ -145,7 +145,13 @@ export function setupOscilloscope(audioCtx, source) {
         canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
         canvasCtx.lineWidth = 1.5;
-        canvasCtx.strokeStyle = 'cyan';
+        
+        if (isPlaying) {
+            canvasCtx.strokeStyle = 'cyan';
+        }
+        else {
+            canvasCtx.strokeStyle = 'gray';
+        }
 
         for (let i = 0; i < lowFrequencyData.length; i++) {
             if (lowFrequencyData[i] !== 0) {
@@ -157,7 +163,12 @@ export function setupOscilloscope(audioCtx, source) {
             }
         }
 
-        canvasCtx.strokeStyle = 'orange';
+        if (isPlaying) {
+            canvasCtx.strokeStyle = 'lime';
+        }
+        else {
+            canvasCtx.strokeStyle = 'dark gray';
+        }
 
         for (let i = 0; i < highFrequencyData.length; i++) {
             if (highFrequencyData[i] !== 0) {
@@ -194,6 +205,115 @@ export function setupOscilloscope(audioCtx, source) {
             canvasCtx.moveTo(startX, startY);
             canvasCtx.arc(X, Y, adjustedRadius, startAngle, endAngle);
             canvasCtx.stroke();
+        }
+    }
+
+    draw();
+
+    return {
+        connectSource
+    };
+}
+
+
+export function setupOscilloscope_balls(audioCtx, source) {
+    // Configura canvas
+    let canvas = document.getElementById("oscilloscope");
+    const canvasCtx = canvas.getContext('2d');
+    
+    let spheres = [];
+    let numSpheres = 50;
+    let sensitivity = 10;
+    let noiseThreshold = 3;
+    let smallerSide;
+    let baseSphereSize = 20; // Variável para o tamanho base das bolas
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        smallerSide = Math.min(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener('resize', resize, false);
+    resize();
+    const analyzer = audioCtx.createAnalyser();
+    source.connect(analyzer);
+    analyzer.fftSize = 2048;
+    
+    const frequencyData = new Uint8Array(analyzer.frequencyBinCount);
+
+    class Sphere {
+        constructor(x, y) {
+            this.basePosition = { x, y };
+            this.size = randomRange(10, baseSphereSize); // Uso da variável baseSphereSize
+            this.color = 'rgba(0, 255, 0, 1)'; // Cor lime inicial
+        }
+
+        update(frequencyData, avgAmp) {
+            let amp = avgAmp * sensitivity;
+            this.size = map(amp, 0, 255, 10, baseSphereSize * 5); // Uso da variável baseSphereSize para o tamanho máximo
+
+            let hue = map(amp, 0, 255, 75, 150); // Intervalo de cores em tons de lime (75 a 150 graus no círculo de cores HSL)
+            this.color = `hsl(${hue}, 100%, 50%)`;
+
+            // Move in a smaller orbital pattern
+            let angle = performance.now() * 0.0003 + this.basePosition.x * 0.03;
+            this.position = {
+                x: this.basePosition.x + Math.cos(angle) * 50,
+                y: this.basePosition.y + Math.sin(angle) * 50
+            };
+        }
+
+        display() {
+            canvasCtx.fillStyle = this.color;
+            canvasCtx.beginPath();
+            canvasCtx.arc(
+                window.innerWidth / 2 + this.position.x,
+                window.innerHeight / 2 + this.position.y,
+                this.size,
+                0,
+                2 * Math.PI
+            );
+            canvasCtx.fill();
+        }
+    }
+
+    for (let i = 0; i < numSpheres; i++) {
+        spheres.push(new Sphere(randomRange(-100, 100), randomRange(-100, 100)));
+    }
+
+    function randomRange(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    function connectSource(newSource) {
+        if (source) {
+            source.disconnect();
+        }
+        source = newSource;
+        source.connect(analyzer);
+        source.connect(audioCtx.destination);
+    }
+
+    function map(value, start1, stop1, start2, stop2) {
+        return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
+    }
+
+    function draw() {
+        requestAnimationFrame(draw);
+
+        analyzer.getByteFrequencyData(frequencyData);
+
+        let avgAmp = frequencyData.reduce((a, b) => a + b, 0) / frequencyData.length;
+        if (avgAmp < noiseThreshold) {
+            avgAmp = noiseThreshold;
+        }
+
+        canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let sphere of spheres) {
+            sphere.update(frequencyData, avgAmp);
+            sphere.display();
         }
     }
 

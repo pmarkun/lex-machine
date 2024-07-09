@@ -102,6 +102,7 @@ export function fetchLocalSynthesisAudio(text) {
     speakNextSentence();
 }
 
+
 export function fetchElevenLabsAudio(text) {
     const voiceId = VOICE_ID;
     const model = 'eleven_multilingual_v2';
@@ -119,7 +120,6 @@ export function fetchElevenLabsAudio(text) {
     socket.onopen = () => {
         sendInitialMessages(socket);
         let sentences = text.split('.');
-        console.log(sentences)
         for (let sentence of sentences) {
             sendTextMessage(socket, sentence);     
         }
@@ -164,11 +164,10 @@ function sendEndMessage(socket) {
 
 function handleSocketMessage(event, audioQueue, audioCtx, oscilloscope) {
     const response = JSON.parse(event.data);
-    console.log(response);
-
     if (response.audio) {
         const audioChunk = Uint8Array.from(atob(response.audio), c => c.charCodeAt(0)).buffer;
-        audioQueue.push(audioChunk);
+        const textAlignment = response.alignment;
+        audioQueue.push({"audio" : audioChunk, "alignment" : textAlignment});
         if (audioQueue.length === 1) {
             playAudioQueue(audioQueue, audioCtx, oscilloscope);
         }
@@ -194,12 +193,20 @@ async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
             command: 'audio_status',
             status: 'play'
         });
-        const audioChunk = audioQueue[0];
+        console.log(audioQueue);
+
+        const audioChunk = audioQueue[0]["audio"];
+        const textAlignment = audioQueue[0]["alignment"];
         await audioCtx.decodeAudioData(audioChunk, decodedBuffer => {
             let source = audioCtx.createBufferSource();
             source.buffer = decodedBuffer;
             source.start();
             oscilloscope.connectSource(source);
+            
+            if (textAlignment) {
+                displayTextWhilePlaying(textAlignment);
+            }
+
             
 
             source.onended = async () => {
@@ -218,3 +225,21 @@ async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
     }
 }
 
+function displayTextWhilePlaying(alignment) {
+    const displayDiv = document.getElementById('text-display');
+
+    const { charStartTimesMs,  charDurationsMs, chars } = alignment;
+    displayDiv.innerHTML = '';  // Clear previous text
+    let startTime = performance.now();
+
+    chars.forEach((char, index) => {
+        setTimeout(() => {
+            displayDiv.innerHTML += char;
+        }, charStartTimesMs[index]/2);
+
+        // Optionally clear the character after its duration
+        setTimeout(() => {
+            // Add any logic here to remove the character if needed
+        }, charStartTimesMs[index] + charDurationsMs[index]);
+    });
+}
