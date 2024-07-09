@@ -198,11 +198,15 @@ function sendInitialMessages(socket) {
 }
 
 async function sendTextMessage(socket, text) {
-    const textMessage = {
-        text: text,
-        try_trigger_generation: true,
-    };
-    socket.send(JSON.stringify(textMessage));
+    if (text !== '') {
+
+        const textMessage = {
+            text: text,
+            try_trigger_generation: true,
+        };
+        socket.send(JSON.stringify(textMessage));
+    }
+
 }
 
 function sendEndMessage(socket) {
@@ -246,26 +250,36 @@ async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
             status: 'play'
         });
         console.log(audioQueue);
-
+        console.log('AUDIOQUEUE 0:', audioQueue[0]);
         const audioChunk = audioQueue[0]["audio"];
         const textAlignment = audioQueue[0]["alignment"];
-        await audioCtx.decodeAudioData(audioChunk, decodedBuffer => {
-            let source = audioCtx.createBufferSource();
-            source.buffer = decodedBuffer;
-            source.start();
-            oscilloscope.connectSource(source);
-            
-            if (textAlignment) {
-                displayTextWhilePlaying(textAlignment);
-            }
 
-            
+        // console.log('audiochunk', audioChunk); //, await audioChunk.length);
 
-            source.onended = async () => {
-                audioQueue.shift();
-                await playAudioQueue(audioQueue, audioCtx, oscilloscope);
-            };
-        });
+        try {
+                
+            await audioCtx.decodeAudioData(audioChunk, decodedBuffer => {
+                let source = audioCtx.createBufferSource();
+                source.buffer = decodedBuffer;
+                source.start();
+                oscilloscope.connectSource(source);
+                
+                if (textAlignment) {
+                    displayTextWhilePlaying(textAlignment);
+                }
+
+                source.onended = async () => {
+                    audioQueue.shift();
+                    await playAudioQueue(audioQueue, audioCtx, oscilloscope);
+                };
+            });
+        } catch (error) {
+            // TODO: falar que deu erro e recomeçar.
+            console.error('ERRO DECODE AUDIO!!!', error);
+            audioQueue.shift();
+            await playAudioQueue(audioQueue, audioCtx, oscilloscope);
+}
+
     } else {
         console.log('FIM AUDIO');
         // recognition.start();

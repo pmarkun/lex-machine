@@ -17,6 +17,8 @@ export class Lex {
 
         this.isPlaying = false;
         this.isListening = false;
+        this.currentPrompt = 'default';
+        this.customPrompt = '';
 
 
         this.enableMic = function() {
