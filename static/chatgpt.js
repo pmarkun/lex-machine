@@ -8,7 +8,7 @@ let systemMessage = PROMPTS.default.prompt;
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
-    // console.log('BRODCAST', event);
+    console.log('BRODCAST GPT', event.data.command);
     switch(event.data.command) {
         case 'context_reset':
             console.log('CONTEXT RESETED!')
@@ -77,6 +77,11 @@ export async function fetchOpenAIResponse() {
 export async function fetchVectorResponse(input) {
     let searchData;
     try {
+        console.log('VECTOR SEARCH INPUT: ', input);
+        if (!input || input.length == 0) {
+            console.log('NO INPUT FOR VECTOR SEARCH');
+            return;
+        }
         const searchResponse = await fetch('tools/vectorSearch', {
             method: 'POST',
             headers: {

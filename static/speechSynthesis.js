@@ -1,4 +1,4 @@
-import { setupOscilloscope } from "./sketch.js";
+import { setupVisual } from "./sketch.js";
 
 
 export class Lex {
@@ -16,6 +16,7 @@ export class Lex {
         console.log('Lex instance has been created');
 
         this.isPlaying = false;
+        this.isListening = false;
 
 
         this.enableMic = function() {
@@ -31,7 +32,7 @@ export class Lex {
 
                 // Inicia a visualização
         
-                setupOscilloscope(audioCtx, source);
+                setupVisual(audioCtx, source);
                 
                 
             }).catch(function(err) {
