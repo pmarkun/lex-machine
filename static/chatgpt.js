@@ -56,8 +56,8 @@ export async function fetchOpenAIResponse() {
                 { role: "system", content: systemMessage },
                 ...interactionHistory
             ],
-            //tools: toolDefinitions,
-            //tool_choice: "auto"
+            tools: toolDefinitions,
+            tool_choice: "auto"
         })
     });
     const data = await response.json();
