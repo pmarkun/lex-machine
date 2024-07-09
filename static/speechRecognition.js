@@ -1,7 +1,6 @@
 import { fetchResponse } from './chatgpt.js';
-import { setupOscilloscope } from './sketch.js';
 import { SILENCE_THRESHOLD, LANG } from './config.js';
-
+import { getQueryParam } from './speechSynthesis.js';
 
 let continuousConversation = false;
 
@@ -38,6 +37,7 @@ bc.onmessage = async (event) => {
                     break;
                 case 'start':
                     // recognition.start();
+
                     break;
             }
             break;
@@ -85,11 +85,20 @@ export function setupRecognition() {
     recognition.interimResults = true;
     recognition.lang = LANG;
 
+    const grammar = '#JSGF V1.0; grammar lex; public <lex> = (Lex | lex | Lais | Alex) { Lex };';
+    const speechRecognitionList = new webkitSpeechGrammarList();
+    speechRecognitionList.addFromString(grammar, 1);
+    recognition.grammars = speechRecognitionList;
+
     recognition.onstart = handleRecognitionStart;
     recognition.onend = handleRecognitionEnd;
     recognition.onresult = handleRecognitionResult;
     recognition.onerror = handleRecognitionError;
 
+    if (getQueryParam("auto")) {
+        recognition.start();
+        continuousConversation = true;
+    }
 }
 
 

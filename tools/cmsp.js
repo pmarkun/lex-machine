@@ -2,7 +2,7 @@ const axios = require('axios');
 const { text } = require('express');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 
 const headers = {
   "accept": "application/json, text/javascript, */*; q=0.01",
@@ -164,26 +164,6 @@ const fetchProjectData = async (tipo, ano, numero) => {
 
 
 const sendToChatGPT = async (text) => {
-  /* const systemPrompt = `Você é um assistente útil. Quando solicitado, você retornará as informações no seguinte formato JSON:
-{
-  "tipo": "<tipo do projeto>",
-  "numero": "<numero do projeto>",
-  "ano": "<ano do projeto>",
-  "ementa": "<ementa do projeto>",
-  "autor": ["<autores do projeto separados por vírgula>"],
-  "texto": "<integra do texto>",
-  "justificativa": "<integra da justificativa>"
-}
-Remova espaços em branco e quebras de linha desnecessárias.`;
-
-  const userPrompt = `Leia o projeto abaixo e retorne um JSON no formato especificado:\n\n${text}`;*/
-
- /* let config = {
-    "systemPrompt" : `Você é uma inteligência artificial legislativa. Quando solicitado, você analisará o projeto de lei, apresentará o objetivo geral do projeto, pontos positivos, pontos de atenção e sugestões de melhoria - sempre amparadas em dados e evidências. Por fim, você deve dar uma orientação de voto que pode ser Favorável ou Contrária, juntamente com uma breve justificativa.`,
-    "userPrompt": `Leia o projeto abaixo e forneça a análise conforme especificado:\n\n${text}`,
-    "mode" : "text"
-  }*/
-  
 
 let config = {
   "systemPrompt" : `Você é uma inteligência artificial legislativa. Quando solicitado, você vai analisar um projeto de lei e explicar de forma simples e direta. Sua explicação deve incluir:
