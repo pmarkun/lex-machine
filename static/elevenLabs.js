@@ -52,16 +52,50 @@ export async function playText(text) {
     }
 }
 
-export function fetchLocalSynthesisAudio(text) {
-    const synth = window.speechSynthesis;
-    const audioContext = window.lex.audioContext;
-    const canvas = window.lex.canvas;
-    const canvasCtx = window.lex.canvasCtx;
+function createWhiteNoise(audioCtx) {
+    const bufferSize = 2 * audioCtx.sampleRate;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
 
-    setupOscilloscope(audioContext, source);
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+    }
+
+    return noiseBuffer;
+}
+
+function generateAlignment(text) {
+    const chars = Array.from(text);
+    const charStartTimesMs = [];
+    const charDurationsMs = [];
+    const duration = 100;  // Tempo fixo para cada caractere em milissegundos
+
+    let currentTimeMs = 0;
+
+    for (let i = 0; i < chars.length; i++) {
+        charStartTimesMs.push(currentTimeMs);
+        charDurationsMs.push(duration);
+        currentTimeMs += duration;
+    }
+
+    return {
+        chars,
+        charStartTimesMs,
+        charDurationsMs
+    };
+}
+
+
+export async function fetchLocalSynthesisAudio(text) {
+    const synth = window.speechSynthesis;
+    const audioCtx = window.lex.audioContext;
+    
+    const source = audioCtx.createBufferSource();
+    source.buffer = createWhiteNoise(audioCtx);
+    let oscilloscope = setupOscilloscope(audioCtx, source);
     
     // Dividir o texto em frases
-    const sentences = text.split('.').map(sentence => sentence.trim()).filter(sentence => sentence.length > 0);
+    const sentences = text.match(/[^\.!\?]+[\.!\?]+/g).map(sentence => sentence.trim());
     let currentSentenceIndex = 0;
 
     const speakNextSentence = () => {
@@ -71,6 +105,11 @@ export function fetchLocalSynthesisAudio(text) {
             utterance.onstart = async () => {
                 console.log("Starting TTS with Web Speech Synthesis API");
                 window.lex.isPlaying = true;
+                let source = audioCtx.createBufferSource();
+                source.buffer = createWhiteNoise(audioCtx);
+                oscilloscope.connectSource(source, false) 
+                source.start()
+
                 await bc.postMessage({
                     command: 'audio_status',
                     status: 'play'
@@ -94,11 +133,16 @@ export function fetchLocalSynthesisAudio(text) {
                 console.error(`SpeechSynthesis Error: ${error}`);
             };
 
+            displayTextWhilePlaying(generateAlignment(sentences[currentSentenceIndex]));
             synth.speak(utterance);
+        }
+        else {
+
         }
     };
 
     // Começa a falar a primeira frase
+    source.start()
     speakNextSentence();
 }
 
@@ -119,7 +163,7 @@ export function fetchElevenLabsAudio(text) {
     
     socket.onopen = () => {
         sendInitialMessages(socket);
-        let sentences = text.split('.');
+        const sentences = text.match(/[^\.!\?]+[\.!\?]+/g).map(sentence => sentence);
         for (let sentence of sentences) {
             sendTextMessage(socket, sentence);     
         }
@@ -218,6 +262,9 @@ async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
         console.log('FIM AUDIO');
         // recognition.start();
         window.lex.isPlaying = false;
+        window.lex.enableMic();
+        window.lex.display.innerHTML = '';
+
         await bc.postMessage({
             command: 'audio_status',
             status: 'stop'
@@ -226,7 +273,7 @@ async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
 }
 
 function displayTextWhilePlaying(alignment) {
-    const displayDiv = document.getElementById('text-display');
+    const displayDiv = window.lex.display;
 
     const { charStartTimesMs,  charDurationsMs, chars } = alignment;
     displayDiv.innerHTML = '';  // Clear previous text
@@ -235,7 +282,7 @@ function displayTextWhilePlaying(alignment) {
     chars.forEach((char, index) => {
         setTimeout(() => {
             displayDiv.innerHTML += char;
-        }, charStartTimesMs[index]/2);
+        }, charStartTimesMs[index]/1.5);
 
         // Optionally clear the character after its duration
         setTimeout(() => {

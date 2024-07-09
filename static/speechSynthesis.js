@@ -12,12 +12,13 @@ export class Lex {
         this.canvas = document.getElementById('oscilloscope');
         this.canvasCtx = this.canvas.getContext('2d');
         this.color = 'black';
+        this.display = document.getElementById('text-display');
         console.log('Lex instance has been created');
 
         this.isPlaying = false;
 
 
-
+        this.enableMic = function() {
         // Verifica se o navegador suporta a API getUserMedia
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
@@ -39,8 +40,8 @@ export class Lex {
         } else {
             console.error('getUserMedia não é suportado no seu navegador!');
         }
-        
-
+    }
+    this.enableMic();
 
 
 

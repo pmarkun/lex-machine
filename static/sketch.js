@@ -97,14 +97,16 @@ export function setupOscilloscope(audioCtx, source) {
     source.connect(highAnalyzer);
     
      
-     function connectSource(newSource) {
+     function connectSource(newSource, loud=true) {
          if (source) {
              source.disconnect();
          }
          source = newSource;
          source.connect(lowAnalyzer);
          source.connect(highAnalyzer);
-         source.connect(audioCtx.destination);
+         if (loud) {
+            source.connect(audioCtx.destination);
+         }
      }
 
     lowAnalyzer.minDecibels = -80;
