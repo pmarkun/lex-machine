@@ -31,7 +31,7 @@
                 const ndef = new NDEFReader();
                 try {
                     await ndef.write({
-                        records: [{ recordType: "url", data: "http://wa.me/5511983370955" }],
+                        records: [{ recordType: "url", data: "https://lex.tec.br/?utm_source=demo&utm_medium=leao&utm_id=test_20240707" }],
                     });
                     consoleLog("NDEF message written!");
                 } catch(error) {
