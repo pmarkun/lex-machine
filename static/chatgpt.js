@@ -4,7 +4,6 @@ import { PROMPTS } from './prompts.js';
 import { toolDefinitions, toolResponse } from "./tools.js";
 
 let interactionHistory = [];
-let systemMessage = PROMPTS.default.prompt;
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
@@ -24,11 +23,31 @@ bc.onmessage = async (event) => {
             console.log('CHANGE PROMPT', event.data);
             switch(event.data.promptId) {
                 case 'custom':
-                    systemMessage = event.data.prompt;
+                    window.lex.currentPrompt = 'custom';
+                    window.lex.customPrompt = event.data.prompt;
                     break;
                 default:
-                    const prompt = PROMPTS[event.data.promptId];
-                    systemMessage = prompt.prompt;
+                    window.lex.currentPrompt = event.data.promptId;
+                    const prompt = PROMPTS[window.lex.currentPrompt];
+
+                    if (prompt.presend) {
+                        await (new BroadcastChannel("activity")).postMessage({
+                            command: 'play_text',
+                            text: prompt.presend
+                        });
+                    }
+                    if (prompt.continuous) {
+                        await (new BroadcastChannel("activity")).postMessage({
+                            command: 'change_continuous',
+                            continuous: prompt.continuous
+                        });
+                    }
+                    if (prompt.resetContext) {
+                        await (new BroadcastChannel("activity")).postMessage({
+                            command: 'context_reset'
+                        });
+                    }
+
                     if (prompt.voiceId) {
                         console.log('CHANGING VOICE to', prompt.voiceId);
                         await (new BroadcastChannel("activity")).postMessage({
@@ -43,6 +62,20 @@ bc.onmessage = async (event) => {
 
 
 export async function fetchOpenAIResponse() {
+
+// 
+    let messages = [];
+
+    switch(window.lex.currentPrompt) {
+        case 'custom':
+            messages.push({ role: "system", content: window.lex.customPrompt });
+            break;
+        default:
+            const prompt = PROMPTS[window.lex.currentPrompt];
+            messages.push({ role: "system", content: [prompt.context ?? '', prompt.prompt].join('\n') });
+            break;
+    }
+
    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -53,7 +86,7 @@ export async function fetchOpenAIResponse() {
         body: JSON.stringify({
             model: "gpt-3.5-turbo-1106",
             messages: [
-                { role: "system", content: systemMessage },
+                ...messages,
                 ...interactionHistory
             ],
             tools: toolDefinitions,
