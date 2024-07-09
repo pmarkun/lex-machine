@@ -137,7 +137,9 @@ export async function fetchLocalSynthesisAudio(text) {
             synth.speak(utterance);
         }
         else {
-
+            setTimeout(() => {
+                window.lex.display.innerHTML = '';
+            },200)
         }
     };
 
@@ -263,7 +265,9 @@ async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
         // recognition.start();
         window.lex.isPlaying = false;
         window.lex.enableMic();
-        window.lex.display.innerHTML = '';
+        setTimeout(() => {
+            window.lex.display.innerHTML = '';
+        },200)
 
         await bc.postMessage({
             command: 'audio_status',
