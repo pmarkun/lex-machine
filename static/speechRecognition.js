@@ -1,4 +1,5 @@
 import { fetchResponse } from './chatgpt.js';
+import { setupOscilloscope } from './sketch.js';
 import { SILENCE_THRESHOLD, LANG } from './config.js';
 
 

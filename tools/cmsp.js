@@ -226,8 +226,6 @@ Lembre-se que isso será falado em voz alta, então faça a explicação como se
 };
 
 
-
-
 const cmspAnalyzeProject = async (tipo, ano, numero) => {
   try {
     const pdfText = await fetchProjectData('0', ano, numero);
