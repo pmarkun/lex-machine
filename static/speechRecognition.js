@@ -6,9 +6,11 @@ let continuousConversation = false;
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
-    console.log('BRODCAST', event);
+    console.log('BRODCAST SR', event.data.command);
     switch(event.data.command) {
-
+        case 'get_status':
+            // TODO: send VOICEID, continuousConversation e recognizing
+            break;
         case 'context_reset':
             break;
         case 'change_prompt':
@@ -104,6 +106,7 @@ export function setupRecognition() {
 
 async function handleRecognitionError() {
     recognizing = false;
+    window.lex.isListening = false;
     await bc.postMessage({
         command: 'recognition_status',
         status: 'disabled'
@@ -111,6 +114,7 @@ async function handleRecognitionError() {
 }
 async function handleRecognitionStart() {
     recognizing = true;
+    window.lex.isListening = true;
     recordButton.textContent = 'Stop Monitoring';
     console.log('Recognition started');
     await bc.postMessage({
@@ -121,6 +125,7 @@ async function handleRecognitionStart() {
 
 async function handleRecognitionEnd() {
     recognizing = false;
+    window.lex.isListening = false;
     recordButton.textContent = 'Start Monitoring';
     console.log('Recognition ended');
     await bc.postMessage({

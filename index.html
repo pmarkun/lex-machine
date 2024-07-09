@@ -7,14 +7,14 @@
     <link rel="stylesheet" href="/static/style.css">
     <style>
          @font-face {
-            font-family: 'Alfabet Medium';
-            src: url('/static/assets/fonts/Alfabet/Alfabet Medium.ttf') format('truetype');
+            font-family: 'Input Mono';
+            src: url('/static/assets/fonts/Input Mono/Input Mono Regular.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
 
         body {
-            font-family: 'Alfabet Medium', sans-serif;
+            font-family: 'Input Mono', sans-serif;
 
         }
         html, body, #fullscreenGeral {
@@ -22,7 +22,11 @@
             height: 100%;
             margin: 0;
             overflow: hidden;
-            background-image: url('/static/assets/background.jpg');
+            background-color: black;;
+            /* background-image: url('/static/assets/background.jpg');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center; */
 
         }
         #recordButton {
@@ -44,18 +48,29 @@
             transform: translate(-50%, -50%);
             z-index: 1001; /* Deve ser maior que o z-index do botão e do canvas */
             /*background: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente para melhor visibilidade */
-            color: white; /* Cor do texto */
+            color: rgba(223, 227, 212, 1); /* Cor do texto */
             padding: 10px; /* Espaçamento interno para melhor legibilidade */
             border-radius: 10px; /* Bordas arredondadas para um visual mais agradável */
             font-size: 2em; /* Tamanho da fonte */
             text-align: center; /* Centralizar o texto */
+            letter-spacing: -.65pt;
+        }
+
+        #logoLex {
+            position: fixed;
+            top: 5%;
+            margin: 0 auto;
+            width: 10%;
+            left: 50%;
+            transform: translate(-50%, 0);
         }
     </style>
 </head>
 <body>
     <div id="fullscreenGeral">
+        <img src="./static/assets/lex.svg" alt="" id="logoLex" />
         <button id="recordButton">Start Monitoring</button>
-        <div id="text-display">LEX</div>
+        <div id="text-display"></div>
         <canvas id="oscilloscope"></canvas>
         <div id="sketch-container"></div>
     </div>
@@ -89,10 +104,9 @@
         document.getElementById('fullscreenGeral').addEventListener("click", e => {
             console.log('container click')
             requestWakeLock();
-            document.getElementById('fullscreenGeral').requestFullscreen({
-                navigationUI: 'hide'
-            })
-            
+            // document.getElementById('fullscreenGeral').requestFullscreen({
+            //     navigationUI: 'hide'
+            // })            
             window.lex = new Lex();
         });
     </script>

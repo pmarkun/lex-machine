@@ -1,4 +1,4 @@
-import { setupOscilloscope } from './sketch.js';
+import { setupVisual } from './sketch.js';
 import { ELEVENLABS_VOICE_ID, ELEVENLABS_API_KEY, VOICE_ENGINE } from './config.js';
 
 let VOICE_ID = ELEVENLABS_VOICE_ID;
@@ -8,8 +8,11 @@ let VOICE_ID = ELEVENLABS_VOICE_ID;
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
-    console.log('BRODCAST', event);
+    console.log('BRODCAST EL', event.data.command);
     switch(event.data.command) {
+        case 'get_status':
+            // TODO: send VOICEID, 
+            break;
         case 'context_reset':
             break;
         case 'change_prompt':
@@ -29,7 +32,6 @@ bc.onmessage = async (event) => {
             break;
         case 'audio_status':
             console.log('AUDIO STATUS', event.data.status);
-           
             break;
     
         case 'recognition_status':
@@ -92,7 +94,7 @@ export async function fetchLocalSynthesisAudio(text) {
     
     const source = audioCtx.createBufferSource();
     source.buffer = createWhiteNoise(audioCtx);
-    let oscilloscope = setupOscilloscope(audioCtx, source);
+    let oscilloscope = setupVisual(audioCtx, source);
     
     // Dividir o texto em frases
     const sentences = text.match(/[^\.!\?]+[\.!\?]+/g).map(sentence => sentence.trim());
@@ -161,20 +163,24 @@ export function fetchElevenLabsAudio(text) {
     const source = audioCtx.createBufferSource();
 
 
-    let oscilloscope = setupOscilloscope(audioCtx, source);
+    let oscilloscope = setupVisual(audioCtx, source);
     
     socket.onopen = () => {
         sendInitialMessages(socket);
-        const sentences = text.match(/[^\.!\?]+[\.!\?]+/g).map(sentence => sentence);
-        for (let sentence of sentences) {
-            sendTextMessage(socket, sentence);     
+        try {
+            const sentences = text.match(/[^\.!\?]+[\.!\?]+/g).map(sentence => sentence);
+            for (let sentence of sentences) {
+                sendTextMessage(socket, sentence);
+            }
+            sendEndMessage(socket);
+        } catch (error) {
+            sendTextMessage(socket, text);
+            sendEndMessage(socket);
         }
-        sendEndMessage(socket);
     };
     socket.onmessage = (event) => handleSocketMessage(event, audioQueue, audioCtx, oscilloscope);
     socket.onerror = (error) => console.error(`WebSocket Error: ${error}`);
     socket.onclose = (event) => handleSocketClose(event);
-
 }
 
 function sendInitialMessages(socket) {

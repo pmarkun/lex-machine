@@ -1,4 +1,24 @@
-export function setupOscilloscope_linear(audioCtx, source) {
+const CAMPAIGN_COLORS = {
+    VERDE_ESCURO: `rgba(13, 28, 34, 1)`,
+    VERDE_ESCURO_40: `rgba(13, 28, 34, 0.4)`,
+    VERDE_ESCURO_50: `rgba(13, 28, 34, 0.5)`,
+    VERDE_ESCURO_80: `rgba(13, 28, 34, 0.8)`,
+    VERDE: `rgba(24, 71, 66, 1)`,
+    NEON: `rgba(117, 251, 156, 1)`,
+    AGUA: `rgba(105, 225, 224, 1)`,
+    ROXO: `rgba(135, 105, 235, 1)`,
+    CREME: `rgba(223, 227, 212, 1)`
+}
+
+
+export function setupVisual(audioCtx, source) {
+    return setupOscilloscope(audioCtx, source);
+    // return setupOscilloscopeLinear(audioCtx, source);
+    // return setupBalls(audioCtx, source);
+}
+
+
+export function setupOscilloscopeLinear(audioCtx, source) {
     //Configura canvas
     let canvas = document.getElementById("oscilloscope");
     const canvasCtx = canvas.getContext('2d');
@@ -76,6 +96,9 @@ export function setupOscilloscope_linear(audioCtx, source) {
     };
 }
 
+
+
+
 export function setupOscilloscope(audioCtx, source) {
      //Configura canvas
      let canvas = document.getElementById("oscilloscope");
@@ -139,6 +162,8 @@ export function setupOscilloscope(audioCtx, source) {
  
     function draw() {
         let isPlaying = window.lex.isPlaying;
+        let isListening = window.lex.isListening;
+
         requestAnimationFrame(draw);
 
         lowAnalyzer.getByteFrequencyData(lowFrequencyData);
@@ -146,40 +171,77 @@ export function setupOscilloscope(audioCtx, source) {
 
         canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-        canvasCtx.lineWidth = 1.5;
-        
+
+        // console.log('isPlaying || isListening', isPlaying, isListening);
+
+        let interno = false;
+        let cor_interno = CAMPAIGN_COLORS.VERDE_ESCURO_50;
+        let linha_interno = 1;
+
+        let externo = true;
+        let cor_externo = CAMPAIGN_COLORS.VERDE_ESCURO_50;
+        let linha_externo = 1;
+
+
+        // if (!(isListening || isPlaying)) {
+        //     interno = false;
+        //     cor_interno = CAMPAIGN_COLORS.VERDE_ESCURO_80;
+        //     linha_interno = 1;
+
+        //     externo = true;
+        //     cor_externo = CAMPAIGN_COLORS.VERDE_ESCURO_80;
+        //     linha_externo = 1;
+
+        // } else
         if (isPlaying) {
-            canvasCtx.strokeStyle = 'cyan';
-        }
-        else {
-            canvasCtx.strokeStyle = 'gray';
+            interno = true;
+            cor_interno = CAMPAIGN_COLORS.ROXO;
+            linha_interno = 2;
+
+            externo = true;
+            cor_externo = CAMPAIGN_COLORS.NEON;
+            linha_externo = 2;
+
+        } else { // if (isListening) {
+            interno = true;
+            cor_interno = CAMPAIGN_COLORS.AGUA;
+            linha_interno = 1;
+
+            externo = true;
+            cor_externo = CAMPAIGN_COLORS.VERDE;
+            linha_externo = 2;
         }
 
-        for (let i = 0; i < lowFrequencyData.length; i++) {
-            if (lowFrequencyData[i] !== 0) {
-                const R = (lowFrequencyData[i] * smallerSide) / 512;
-                drawArcV1(R, 1, 5);
-                drawArcV1(R, 7, 11);
-                drawArcV1(R, 13, 17);
-                drawArcV1(R, 19, 23);
+
+
+        if (interno) {
+            // INTERNO
+            canvasCtx.lineWidth = linha_interno;
+            canvasCtx.strokeStyle = cor_interno;
+
+            for (let i = 0; i < highFrequencyData.length; i++) {
+                if (highFrequencyData[i] !== 0) {
+                    const R = (highFrequencyData[i] * smallerSide) / 1024;
+                    drawArcV2(i, R, 1, 5);
+                    drawArcV2(i, R, 7, 11);
+                    drawArcV2(i, R, 13, 17);
+                    drawArcV2(i, R, 19, 23);
+                }
             }
         }
-
-        if (isPlaying) {
-            canvasCtx.strokeStyle = 'lime';
-        }
-        else {
-            canvasCtx.strokeStyle = 'dark gray';
-        }
-
-        for (let i = 0; i < highFrequencyData.length; i++) {
-            if (highFrequencyData[i] !== 0) {
-                const R = (highFrequencyData[i] * smallerSide) / 1024;
-                drawArcV2(i, R, 1, 5);
-                drawArcV2(i, R, 7, 11);
-                drawArcV2(i, R, 13, 17);
-                drawArcV2(i, R, 19, 23);
-            }
+        if (externo) {
+            // EXTERNO
+            canvasCtx.lineWidth = linha_externo;
+            canvasCtx.strokeStyle = cor_externo;
+            for (let i = 0; i < lowFrequencyData.length; i++) {
+                if (lowFrequencyData[i] !== 0) {
+                    const R = (lowFrequencyData[i] * smallerSide) / 512;
+                    drawArcV1(R, 1, 5);
+                    drawArcV1(R, 7, 11);
+                    drawArcV1(R, 13, 17);
+                    drawArcV1(R, 19, 23);
+                }
+            }  
         }
     }
 
@@ -218,13 +280,13 @@ export function setupOscilloscope(audioCtx, source) {
 }
 
 
-export function setupOscilloscope_balls(audioCtx, source) {
+export function setupBalls(audioCtx, source) {
     // Configura canvas
     let canvas = document.getElementById("oscilloscope");
     const canvasCtx = canvas.getContext('2d');
     
     let spheres = [];
-    let numSpheres = 50;
+    let numSpheres = 150;
     let sensitivity = 10;
     let noiseThreshold = 3;
     let smallerSide;
@@ -248,7 +310,7 @@ export function setupOscilloscope_balls(audioCtx, source) {
         constructor(x, y) {
             this.basePosition = { x, y };
             this.size = randomRange(10, baseSphereSize); // Uso da variável baseSphereSize
-            this.color = 'rgba(0, 255, 0, 1)'; // Cor lime inicial
+            this.color = 'rgba(0, 255, 0, .5)'; // Cor lime inicial
         }
 
         update(frequencyData, avgAmp) {
@@ -256,7 +318,7 @@ export function setupOscilloscope_balls(audioCtx, source) {
             this.size = map(amp, 0, 255, 10, baseSphereSize * 5); // Uso da variável baseSphereSize para o tamanho máximo
 
             let hue = map(amp, 0, 255, 75, 150); // Intervalo de cores em tons de lime (75 a 150 graus no círculo de cores HSL)
-            this.color = `hsl(${hue}, 100%, 50%)`;
+            this.color = `hsla(${hue}, 100%, 50%, 5%)`;
 
             // Move in a smaller orbital pattern
             let angle = performance.now() * 0.0003 + this.basePosition.x * 0.03;
@@ -281,7 +343,7 @@ export function setupOscilloscope_balls(audioCtx, source) {
     }
 
     for (let i = 0; i < numSpheres; i++) {
-        spheres.push(new Sphere(randomRange(-100, 100), randomRange(-100, 100)));
+        spheres.push(new Sphere(randomRange(-200, 200), randomRange(-100, 100)));
     }
 
     function randomRange(min, max) {

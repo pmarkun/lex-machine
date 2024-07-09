@@ -25,6 +25,7 @@ app.get('/nfc', (req, res) => {
 
 // Endpoint for search queries
 app.post('/tools/vectorSearch', async (req, res) => {
+  console.log('Vector search...');
   const { query, num } = req.body;
   if (!query) {
     return res.status(400).send({ error: 'Query is required' });
