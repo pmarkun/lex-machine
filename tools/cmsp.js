@@ -2,7 +2,7 @@ const axios = require('axios');
 const { text } = require('express');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 
 const headers = {
   "accept": "application/json, text/javascript, */*; q=0.01",
