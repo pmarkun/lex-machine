@@ -2,6 +2,8 @@ const axios = require('axios');
 const { text } = require('express');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
+const cachedResponse = require('../cache');
+
 require('dotenv').config();
 
 const headers = {
@@ -57,6 +59,7 @@ const extractTextFromPDF = async (pdfPath) => {
 
 // Função principal que realiza todas as etapas
 const fetchProjectData = async (tipo, ano, numero) => {
+  console.log({ano : ano, numero : numero, tipo: tipo})
   const url = new URL("https://splegisconsulta.saopaulo.sp.leg.br/Pesquisa/PageDataProjeto");
 
   const params = {
@@ -133,6 +136,7 @@ const fetchProjectData = async (tipo, ano, numero) => {
   Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
   try {
+    console.log(url.toString());
     const response = await axios.get(url.toString(), { headers });
     const data = response.data;
     if (data.data && data.data.length > 0) {
@@ -154,11 +158,11 @@ const fetchProjectData = async (tipo, ano, numero) => {
       return pdfText;
     } else {
       console.log('No data found for the given parameters.');
-      return null;
+      throw error;
     }
   } catch (error) {
     console.error('Error fetching data:', error);
-    return null;
+    throw error;
   }
 };
 
@@ -177,6 +181,15 @@ Lembre-se que isso será falado em voz alta, então faça a explicação como se
   "userPrompt": `Leia o projeto abaixo e forneça a análise conforme especificado:\n\n${text}`,
   "mode" : "text"
 }
+
+ // Verifica se a resposta já está em cache
+ const cached = cachedResponse.get(text);
+ if (cached) {
+   console.log("Serving cached response...");
+   return cached;
+ }
+
+
   try {
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
       model: 'gpt-4',
@@ -192,13 +205,10 @@ Lembre-se que isso será falado em voz alta, então faça a explicação como se
     });
 
     const message = response.data.choices[0].message.content;
-    if (config['mode'] == "json") {
-      return JSON.parse(message);
-    }
-    else {
-      return message;
-    }
-    
+    const result = config.mode === 'json' ? JSON.parse(message) : message;
+
+    cachedResponse.set(text, result);
+    return result;
   } catch (error) {
     console.error('Error communicating with OpenAI API:', error);
     throw error;

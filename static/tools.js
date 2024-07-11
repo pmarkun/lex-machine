@@ -1,53 +1,62 @@
-//import cmspAnalyzeProject from '../tools/cmsp.js';
 
+
+
+//Tool que análise projetos
 export async function cmspAnalyzeProject(tipo, ano, numero) {
-  await (new BroadcastChannel("activity")).postMessage({
-    command: 'play_text',
-    text: "Vou acessar agora o site da Câmara, baixar o projeto e analisar. Guenta ai!"
-  });
   const response = await fetch('tools/cmspAnalyzeProject', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-        "tipo" : "0",
+        "tipo" : "0", //tipo hardcoded
         "ano" : ano,
         "numero" : numero
     })
 });
-  return response;
+  if (response.status == 200) {
+    return response;
+  }
+  else {
+    console.error(response);
+    return "Ihhh... parece que tive um problema. Podemos tentar novamente?"
+  }
+}
+
+const cmspAnalyzeProjectTool = {
+  name: "cmspAnalyzeProject",
+  description: "Analise um projeto de lei que tenha número e ano específicos da Câmara Municipal de São Paulo e traz reflexões e orientação de voto.",
+  parameters: {
+    type: "object",
+    properties: {
+      tipo: {
+        type: "string",
+        enum: ["PL","PR"],
+        description: "O formato do projeto de lei, pode ser PL se for um projeto de lei ou PR se for projeto de resolução."
+      },
+      ano: {
+        type: "number",
+        description: "O ano do projeto de lei com quatro digitos.",
+      },
+      numero: {
+        type: "number",
+        description: "O número de projeto de lei.",
+      }
+    },
+    required: ["tipo", "ano", "numero"],
+  },
+  handler: async ({ tipo, ano, numero }) => {
+    return await cmspAnalyzeProject(tipo, ano, numero);
+  },
 }
 
 
+//Lista de tools
 export const tools = [
-  {
-    name: "cmspAnalyzeProject",
-    description: "Analyze a legislative project from the São Paulo City Council and provide insights and voting recommendation",
-    parameters: {
-      type: "object",
-      properties: {
-        tipo: {
-          type: "string",
-          description: "The type of the project",
-        },
-        ano: {
-          type: "string",
-          description: "The year of the project",
-        },
-        numero: {
-          type: "string",
-          description: "The number of the project",
-        }
-      },
-      required: ["tipo", "ano", "numero"],
-    },
-    handler: async ({ tipo, ano, numero }) => {
-      return await cmspAnalyzeProject(tipo, ano, numero);
-    }
-  }
+  cmspAnalyzeProjectTool
 ];
 
+//Mapeia definições das Tools para o dicionario do chatgpt
 export const toolDefinitions = tools.map(tool => ({
   type: "function",
   function: {
@@ -57,6 +66,7 @@ export const toolDefinitions = tools.map(tool => ({
   }
 }));
 
+//Função que constrói resposta da tool
 export const toolResponse = async (toolName, parameters) => {
   const tool = tools.find(t => t.name === toolName);
   if (tool) {
