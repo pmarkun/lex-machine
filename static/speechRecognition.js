@@ -98,6 +98,7 @@ export function setupRecognition() {
     recognition.onerror = handleRecognitionError;
 
     if (getQueryParam("auto")) {
+
         recognition.start();
         continuousConversation = true;
     }
@@ -150,7 +151,7 @@ function handleRecognitionResult(event) {
     silenceTimeout = setTimeout(() => {
         console.log('Recognition stopped');
         recognition.stop(); // Stop recognition after silence
-        console.log('Acionando LLM...')
+        console.log(`Acionando LLM... com prompt ${window.lex.currentPrompt}.`)
         fetchResponse(transcript);
         transcript = [];
     }, SILENCE_THRESHOLD);

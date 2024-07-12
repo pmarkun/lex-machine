@@ -33,31 +33,30 @@ async function readNFC() {
 
 async function processURL(url) {
     document.getElementById("urlDisplay").textContent = `URL: ${url}`;
-    const rfid = await extractRFIDFromURL(url);
-    if (rfid) {
+    const NFC = await extractNFCFromURL(url);
+    if (NFC) {
         
-        let user = await checkFirebaseForRFID(rfid);
-        let firstName = user.fullName.split(" ")[0]
-        speak(`Bem Vindo, ${firstName}!`);
+        let user = await checkFirebaseForNFC(NFC);
+        speak(`Bem Vindo, ${user.firstName}!`);
     } else {
-        console.log("Não foi possível extrair o RFID da URL.");
+        console.log("Não foi possível extrair o NFC da URL.");
     }
 }
 
-function extractRFIDFromURL(url) {
+function extractNFCFromURL(url) {
     try {
         const urlObj = new URL(url);
-        return urlObj.searchParams.get("ctz");
+        return urlObj.searchParams.get("id");
     } catch (error) {
-        console.error("Error extracting RFID from URL: ", error);
+        console.error("Error extracting NFC from URL: ", error);
         return null;
     }
 }
 
-async function checkFirebaseForRFID(rfid) {
+async function checkFirebaseForNFC(NFC) {
     const url = FIREBASE_URL;
     
-    const data = { rfid: parseInt(rfid) };
+    const data = { id: NFC };
     
     try {
         const response = await fetch(url, {
@@ -125,7 +124,7 @@ function speak(text) {
 }
 
 
-async function testRFID() {
-    const url = "https://lex.tec.br/rfid?ctz=1";
+async function testNFC() {
+    const url = "https://lex.tec.br/nfc?id=5774cad333ef1d34067749756219d0bd";
     await processURL(url);
 }

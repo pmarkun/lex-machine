@@ -55,6 +55,15 @@ bc.onmessage = async (event) => {
                             voiceId: prompt.voiceId
                         });
                     }
+
+                    if (prompt.tool_choice) {
+                        console.log("Ativando Tools!");
+                        window.lex.tool_choice=prompt.tool_choice;
+                    }
+                    else {
+                        console.log("Desativando Tools!");
+                        window.lex.tool_choice="none";
+                    }
             }
             break;
     }
@@ -90,7 +99,7 @@ export async function fetchOpenAIResponse() {
                 ...interactionHistory
             ],
             tools: toolDefinitions,
-            tool_choice: "auto"
+            tool_choice: window.lex.tool_choice
         })
     });
     const data = await response.json();

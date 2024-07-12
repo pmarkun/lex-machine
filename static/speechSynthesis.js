@@ -20,6 +20,7 @@ export class Lex {
         this.display = document.getElementById('text-display');
         this.engine = VOICE_ENGINE;
         this.auto = false;
+        this.tool_choice = "none";
         
         if (getQueryParam("engine")) {
             this.engine = getQueryParam("engine");
