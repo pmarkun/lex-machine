@@ -8,7 +8,7 @@
     <style>
          @font-face {
             font-family: 'Input Mono';
-            src: url('/static/assets/fonts/Input Mono/Input Mono Regular.ttf') format('truetype');
+            src: url('/static/assets/fonts/Input Mono/Input Mono Light.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
@@ -23,8 +23,8 @@
             margin: 0;
             overflow: hidden;
             background-color: black;;
-            background-image: url('/static/assets/background.jpg');
-            background-repeat: no-repeat;
+            /*background-image: url('/static/assets/background.jpg');
+            background-repeat: no-repeat;*/
             background-size: cover;
             background-position: center;
 
@@ -42,6 +42,7 @@
             height: 100%;
         }
         #text-display {
+            min-width: 80%;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -51,7 +52,7 @@
             color: rgba(223, 227, 212, 1); /* Cor do texto */
             padding: 10px; /* Espaçamento interno para melhor legibilidade */
             border-radius: 10px; /* Bordas arredondadas para um visual mais agradável */
-            font-size: 2em; /* Tamanho da fonte */
+            font-size: 3.5em; /* Tamanho da fonte */
             text-align: center; /* Centralizar o texto */
             letter-spacing: -.65pt;
         }
