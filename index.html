@@ -23,10 +23,10 @@
             margin: 0;
             overflow: hidden;
             background-color: black;;
-            /* background-image: url('/static/assets/background.jpg');
+            background-image: url('/static/assets/background.jpg');
             background-repeat: no-repeat;
             background-size: cover;
-            background-position: center; */
+            background-position: center;
 
         }
         #recordButton {
@@ -106,8 +106,10 @@
             requestWakeLock();
             // document.getElementById('fullscreenGeral').requestFullscreen({
             //     navigationUI: 'hide'
-            // })            
-            window.lex = new Lex();
+            // })
+            if (!window.lex) {
+                window.lex = new Lex();
+            }
         });
     </script>
 </body>

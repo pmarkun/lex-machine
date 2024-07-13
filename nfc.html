@@ -3,65 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC</title>
-    <script>
-        async function readTag() {
-            if ("NDEFReader" in window) {
-                const ndef = new NDEFReader();
-                try {
-                    await ndef.scan();
-                    ndef.onreading = event => {
-                        const decoder = new TextDecoder();
-                        for (const record of event.message.records) {
-                            consoleLog("Record type:  " + record.recordType);
-                            consoleLog("MIME type:    " + record.mediaType);
-                            consoleLog("=== data ===\n" + decoder.decode(record.data));
-                        }
-                    }
-                } catch(error) {
-                    consoleLog(error);
-                }
-            } else {
-                consoleLog("Web NFC is not supported.");
-            }
-        }
-
-        async function writeTag() {
-            if ("NDEFReader" in window) {
-                const ndef = new NDEFReader();
-                try {
-                    await ndef.write({
-                        records: [{ recordType: "url", data: "https://lex.tec.br/?utm_source=demo&utm_medium=leao&utm_id=test_20240707" }],
-                    });
-                    consoleLog("NDEF message written!");
-                } catch(error) {
-                    consoleLog(error);
-                }
-            } else {
-                consoleLog("Web NFC is not supported.");
-            }
-        }
-
-        function consoleLog(data) {
-            var logElement = document.getElementById('log');
-            logElement.innerHTML += data + '\n';
-        };
-    </script>
+    <title>LEX Scanner</title>
+    <link rel="stylesheet" href="/static/nfc/style.css">
 </head>
 <body>
-    <p>
-        <button onclick="readTag()">Test NFC Read</button>
-        <button onclick="writeTag()">Test NFC Write</button>
-    </p>
-      
-    <pre id="log">
+    <h1>LEX Scanner</h1>
+    <button onclick="readNFC()">Start NFC Scan</button>
+    <button onclick="testNFC()">Test NFC=1</button>
+    <p id="urlDisplay">Pressione o botão e es>caneie uma tag NFC.</p>
+    <audio id="audio" controls></audio>
 
-    </pre>
-    
-    
-    
-    
-    <p><small>Based on the code snippets from <a href="https://w3c.github.io/web-nfc/#examples">specification draft</a>.</small></p>
-    
+    <script src="/static/nfc/config.js"></script>
+
+    <script src="/static/nfc/script.js"></script>
 </body>
 </html>

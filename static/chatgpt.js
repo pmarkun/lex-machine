@@ -55,6 +55,15 @@ bc.onmessage = async (event) => {
                             voiceId: prompt.voiceId
                         });
                     }
+
+                    if (prompt.tool_choice) {
+                        console.log("Ativando Tools!");
+                        window.lex.tool_choice=prompt.tool_choice;
+                    }
+                    else {
+                        console.log("Desativando Tools!");
+                        window.lex.tool_choice="none";
+                    }
             }
             break;
     }
@@ -89,17 +98,28 @@ export async function fetchOpenAIResponse() {
                 ...messages,
                 ...interactionHistory
             ],
-            //tools: toolDefinitions,
-            //tool_choice: "auto"
+            tools: toolDefinitions,
+            tool_choice: window.lex.tool_choice
         })
     });
     const data = await response.json();
+    
+    //Checa se tem uma tool
     if (data.choices[0].message.tool_calls) {
-        const tool_name = data.choices[0].message.tool_calls[0].function.name;
-        const parameters = data.choices[0].message.tool_calls[0].function.arguments;
-        const toolResult = await toolResponse(tool_name, parameters);
-        const resultText = await toolResult.json()
-        return resultText.answer;
+        const tool = data.choices[0].message.tool_calls[0].function;
+        try {
+            await (new BroadcastChannel("activity")).postMessage({
+                command: 'play_text',
+                text: "Claro. Isso pode demorar um pouco...",
+            });
+            const toolResult = await toolResponse(tool.name, tool.arguments);
+            const resultText = await toolResult.json()
+            return resultText.answer;
+        }
+        catch (error) {
+            console.error(`Error running ${tool.name}:`, error);
+            return "Ihhhh... parece que tive um problema aqui. Podemos tentar de novo?"
+        }
     } else {
         const resultText = data.choices[0].message.content;
         console.log(resultText);
@@ -140,6 +160,9 @@ export async function fetchVectorResponse(input) {
 
 export async function fetchResponse(transcript) {
     //Adiciona texto do usuário no interactionHistory
+    if (!transcript.trim()) {
+        return null;
+    }
     interactionHistory.push({ role: 'user', content: transcript });
 
     console.log("Fetching Response..."); 

@@ -1,5 +1,10 @@
 import { setupVisual } from "./sketch.js";
+import { VOICE_ENGINE } from "./config.js";
 
+export function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
 
 export class Lex {
 
@@ -13,6 +18,19 @@ export class Lex {
         this.canvasCtx = this.canvas.getContext('2d');
         this.color = 'black';
         this.display = document.getElementById('text-display');
+        this.engine = VOICE_ENGINE;
+        this.auto = false;
+        this.tool_choice = "none";
+        
+        if (getQueryParam("engine")) {
+            this.engine = getQueryParam("engine");
+        }
+        else {
+            this.engine = VOICE_ENGINE;
+        }
+
+       
+        
         console.log('Lex instance has been created');
 
         this.isPlaying = false;
@@ -50,10 +68,8 @@ export class Lex {
                 this.isMicActive = false;
             }
     }
+
     this.enableMic();
-
-
-
     }
 
 }
