@@ -35,32 +35,38 @@ export class Lex {
 
         this.isPlaying = false;
         this.isListening = false;
+        this.isMicActive = false;
+
         this.currentPrompt = 'default';
         this.customPrompt = '';
 
+        // TODO: setInterval enviando status acima para navegador
+
 
         this.enableMic = function() {
-        // Verifica se o navegador suporta a API getUserMedia
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            // Verifica se o navegador suporta a API getUserMedia
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
-            // Solicita permissão para acessar o microfone
-            navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(function(stream) {
-                // Cria um AudioContext
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioCtx.createMediaStreamSource(stream);
+                // Solicita permissão para acessar o microfone
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function(stream) {
+                    // Cria um AudioContext
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioCtx.createMediaStreamSource(stream);
 
-                // Inicia a visualização
-        
-                setupVisual(audioCtx, source);
-                
-                
-            }).catch(function(err) {
-                console.error('O seguinte erro ocorreu: ' + err);
-            });
-        } else {
-            console.error('getUserMedia não é suportado no seu navegador!');
-        }
+                    // Inicia a visualização
+            
+                    setupVisual(audioCtx, source);
+                    this.isMicActive = true;
+                    
+                }).catch(function(err) {
+                    console.error('O seguinte erro ocorreu: ' + err);
+                    this.isMicActive = false;
+                });
+            } else {
+                console.error('getUserMedia não é suportado no seu navegador!');
+                this.isMicActive = false;
+            }
     }
 
     this.enableMic();
