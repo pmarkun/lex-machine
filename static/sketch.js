@@ -12,8 +12,8 @@ const CAMPAIGN_COLORS = {
 
 
 export function setupVisual(audioCtx, source) {
-    return setupOscilloscope(audioCtx, source);
-    // return setupOscilloscopeLinear(audioCtx, source);
+    // return setupOscilloscope(audioCtx, source);
+    return setupOscilloscopeLinear(audioCtx, source);
     // return setupBalls(audioCtx, source);
 }
 
