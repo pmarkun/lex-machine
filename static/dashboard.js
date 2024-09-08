@@ -18,6 +18,9 @@ bc.onmessage = async (event) => {
         case 'change_voice':
             document.getElementById('voiceSelect').value = event.data.voiceId;
             break;
+        case 'transcript':
+            updateTranscript(event.data.transcript);
+            break;
     }
 };
 
@@ -88,6 +91,11 @@ document.getElementById('sendCustomPromptButton').addEventListener('click', asyn
 });
 
 
+// Função para atualizar o texto transcrito em tempo real
+const updateTranscript = (transcript) => {
+    const transcriptBox = document.getElementById('transcriptBox');
+    transcriptBox.textContent = transcript; // Substitui o texto existente pelo novo texto transcrito
+};
 
 // Função para exibir o log do chat de forma formatada
 const displayChatLog = (interactionHistory) => {

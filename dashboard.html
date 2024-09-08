@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lex Dashboard</title>
-    <link rel="stylesheet" href="static/dashboard.css">
+    <link rel="stylesheet" href="/static/dashboard.css">
 </head>
 <body>
     <div class="container">
@@ -36,6 +36,13 @@
             </div>
         </section>
 
+        <!-- Área de Transcrição -->
+        <section id="transcricao">
+            <h3>Transcrição em Tempo Real:</h3>
+            <div id="transcriptBox"></div>
+        </section>
+
+        <!-- Entrada de Áudio e Texto -->
         <section id="audioInput">
             <input type="text" name="text" id="text" placeholder="Digite o texto para falar" />
             <button id="sendTextButton" data-command="play_text">Dizer Texto</button>
@@ -46,6 +53,6 @@
         </section>
     </div>
 
-    <script type="module" src="static/dashboard.js"></script>
+    <script type="module" src="/static/dashboard.js"></script>
 </body>
 </html>

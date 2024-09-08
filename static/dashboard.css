@@ -93,6 +93,25 @@ input[type="text"], select, textarea {
 }
 
 
+/* Estilo para a área de transcrição */
+#transcricao {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #1e1e1e;
+}
+
+#transcriptBox {
+    padding: 8px;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border-radius: 4px;
+    min-height: 50px; /* Altura mínima para a caixa de transcrição */
+    white-space: pre-wrap; /* Mantém espaços e quebra de linhas */
+    word-break: break-word;
+}
+
 .checkbox {
     display: flex;
     align-items: center;
