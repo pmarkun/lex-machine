@@ -36,7 +36,7 @@ h1 {
     text-align: center;
 }
 
-button, input, select {
+button, input, select, textarea {
     margin: 5px;
     padding: 10px;
     border-radius: 4px;
@@ -110,6 +110,46 @@ input[type="text"], select, textarea {
     min-height: 50px; /* Altura mínima para a caixa de transcrição */
     white-space: pre-wrap; /* Mantém espaços e quebra de linhas */
     word-break: break-word;
+}
+
+
+/* Estilo para o banco de frases */
+#fraseBanco {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #1e1e1e;
+}
+
+.frase-item {
+    display: flex; /* Define o layout flex para o container */
+    align-items: center; /* Alinha os itens ao centro verticalmente */
+    justify-content: space-between; /* Espaça os itens uniformemente */
+    margin-bottom: 8px;
+    padding: 8px;
+    background-color: #2a2a2a;
+    border-radius: 4px;
+}
+
+.frase-item span {
+    flex-grow: 1; /* Faz o texto ocupar todo o espaço disponível */
+}
+
+.frase-item button {
+    margin-left: 5px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #444;
+    color: #e0e0e0;
+    transition: background-color 0.2s;
+}
+
+.frase-item button:hover {
+    background-color: #666;
 }
 
 .checkbox {

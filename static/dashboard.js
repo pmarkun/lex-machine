@@ -2,6 +2,7 @@ import { PROMPTS } from './prompts.js';
 import { ELEVENLABS_API_KEY } from './config.js';
 
 const bc = new BroadcastChannel("activity");
+let frases = []; // Banco de frases
 
 bc.onmessage = async (event) => {
     console.log('BROADCAST', event.data.command, event.data);
@@ -29,6 +30,7 @@ const handleRecognitionStatus = (status) => {
     document.getElementById('recognitionButton').innerHTML = status === 'active' ? 'Parar Reconhecimento' : 'Iniciar Reconhecimento';
 };
 
+// Lidar com os eventos de botão usando data-command
 document.querySelectorAll('button[data-command]').forEach(button => {
     button.addEventListener('click', async (e) => {
         const command = e.target.getAttribute('data-command');
@@ -38,6 +40,13 @@ document.querySelectorAll('button[data-command]').forEach(button => {
             payload.status = document.getElementById('recognitionButton').innerText.includes('Parar') ? 'stop' : 'start';
         } else if (command === 'play_text') {
             payload.text = document.getElementById('text').value;
+        } else if (command === 'save_text') {
+            const text = document.getElementById('text').value;
+            if (text) {
+                addFrase(text);
+                document.getElementById('text').value = ''; // Limpa o input após adicionar
+            }
+            return; // Não é necessário enviar uma mensagem ao BroadcastChannel para este comando
         }
 
         await bc.postMessage(payload);
@@ -57,6 +66,48 @@ document.getElementById('voiceSelect').addEventListener('change', async (e) => {
         voiceId: e.target.value
     });
 });
+
+// Função para adicionar uma frase ao banco de frases
+const addFrase = (frase) => {
+    frases.push(frase);
+    renderFraseList();
+};
+
+// Função para remover uma frase do banco de frases
+const removeFrase = (index) => {
+    frases.splice(index, 1);
+    renderFraseList();
+};
+
+// Função para renderizar o banco de frases
+const renderFraseList = () => {
+    const fraseList = document.getElementById('fraseList');
+    fraseList.innerHTML = ''; // Limpa a lista antes de renderizar novamente
+
+    frases.forEach((frase, index) => {
+        const fraseElement = document.createElement('div');
+        fraseElement.className = 'frase-item';
+
+        const fraseText = document.createElement('span');
+        fraseText.textContent = `${frase.substring(0, 140)}...`; // Mostra o começo da frase
+        fraseElement.appendChild(fraseText);
+
+        const playButton = document.createElement('button');
+        playButton.textContent = 'Play';
+        playButton.setAttribute('data-command', 'play_text');
+        playButton.onclick = async () => {
+            await bc.postMessage({ command: 'play_text', text: frase });
+        };
+        fraseElement.appendChild(playButton);
+
+        const removeButton = document.createElement('button');
+        removeButton.textContent = '-';
+        removeButton.onclick = () => removeFrase(index);
+        fraseElement.appendChild(removeButton);
+
+        fraseList.appendChild(fraseElement);
+    });
+};
 
 // Carregar prompts do arquivo
 const promptSelect = document.getElementById('promptSelect');
@@ -90,12 +141,36 @@ document.getElementById('sendCustomPromptButton').addEventListener('click', asyn
     });
 });
 
+// Função para buscar vozes da Eleven Labs e popular o select
+const loadVoices = async () => {
+    try {
+        const response = await fetch('/dashboard/voices');
+        if (!response.ok) {
+            throw new Error('Erro ao buscar vozes da API.');
+        }
+        const data = await response.json();
+        console.log(data);
+        const voiceSelect = document.getElementById('voiceSelect');
 
-// Função para atualizar o texto transcrito em tempo real
-const updateTranscript = (transcript) => {
-    const transcriptBox = document.getElementById('transcriptBox');
-    transcriptBox.textContent = transcript; // Substitui o texto existente pelo novo texto transcrito
+        voiceSelect.innerHTML = ''; 
+
+        data.voices.forEach(voice => {
+            if (voice.category == 'premade') {
+                return;
+            }
+
+            const option = document.createElement('option');
+            option.value = voice.voice_id;
+            option.textContent = `Voz: ${voice.name}`;
+            voiceSelect.appendChild(option);
+        });
+    } catch (err) {
+        console.error('Erro ao carregar vozes:', err);
+    }
 };
+
+// Chamar a função para carregar vozes ao carregar o script
+loadVoices();
 
 // Função para exibir o log do chat de forma formatada
 const displayChatLog = (interactionHistory) => {
@@ -114,7 +189,6 @@ const displayChatLog = (interactionHistory) => {
         contentElement.textContent = message.content;
         messageElement.appendChild(contentElement);
 
-        // Aplica estilo diferente para o usuário e a assistente
         if (message.role === 'user') {
             messageElement.classList.add('user-message');
         } else {
@@ -125,37 +199,8 @@ const displayChatLog = (interactionHistory) => {
     });
 };
 
-
-// Função para buscar vozes da Eleven Labs e popular o select
-const loadVoices = async () => {
-    try {
-        // Chamada para o próprio servidor usando o caminho relativo
-        const response = await fetch('/dashboard/voices');
-        if (!response.ok) {
-            throw new Error('Erro ao buscar vozes da API.');
-        }
-        const data = await response.json();
-        console.log(data);
-        const voiceSelect = document.getElementById('voiceSelect');
-
-        // Limpar a lista de seleção antes de popular
-        voiceSelect.innerHTML = ''; 
-
-        data.voices.forEach(voice => {
-            // Ignorar vozes premade
-            if (voice.category == 'premade') {
-                return;
-            }
-
-            const option = document.createElement('option');
-            option.value = voice.voice_id;
-            option.textContent = `Voz: ${voice.name}`;
-            voiceSelect.appendChild(option);
-        });
-    } catch (err) {
-        console.error('Erro ao carregar vozes:', err);
-    }
+// Função para atualizar o texto transcrito em tempo real
+const updateTranscript = (transcript) => {
+    const transcriptBox = document.getElementById('transcriptBox');
+    transcriptBox.textContent = transcript;
 };
-
-// Chamar a função para carregar vozes ao carregar o script
-loadVoices();

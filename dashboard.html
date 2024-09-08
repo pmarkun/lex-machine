@@ -42,12 +42,19 @@
             <div id="transcriptBox"></div>
         </section>
 
-        <!-- Entrada de Áudio e Texto -->
-        <section id="audioInput">
-            <input type="text" name="text" id="text" placeholder="Digite o texto para falar" />
-            <button id="sendTextButton" data-command="play_text">Dizer Texto</button>
+        <!-- Banco de Frases -->
+        <section id="fraseBanco">
+            <h3>Banco de Frases:</h3>
+            <div id="fraseList"></div>
         </section>
 
+        <!-- Entrada de Áudio e Texto -->
+        <section id="audioInput">
+            <textarea type="text" name="text" id="text" placeholder="Digite o texto para falar"></textarea>
+            <button id="guardarTextButton" data-command="save_text">Guardar Texto</button>
+            <button id="sendTextButton" data-command="play_text">Dizer Texto</button>
+        </section>
+        
         <section id="chat">
             <pre id="chatLog">LOG DO CHAT</pre>
         </section>
