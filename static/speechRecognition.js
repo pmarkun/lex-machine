@@ -51,7 +51,6 @@ async function handleSpeechsStart(e) {
     });
 }
 async function handleSpeechsEnd(e) {
-    document.body.classList.remove('rec');
     console.log('handleSpeechsEnd', e);
     recognizing = false;
     window.lex.isListening = false;

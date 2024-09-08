@@ -28,6 +28,7 @@ function clearUtterance() {
 }
 
 export async function playText(text) {
+    document.body.classList.remove('rec');
     switch(VOICE_ENGINE) {
         case 'local':
             await fetchLocalSynthesisAudio(text)

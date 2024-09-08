@@ -129,7 +129,6 @@ export class Lex {
                     break;
         
                 case 'change_recognition':
-                    console.log('FORCED change_recognition', event.data.status)
                     switch(event.data.status) {
                         case 'stop':
                             window.recognition.stop();
@@ -148,6 +147,7 @@ export class Lex {
                 case 'audio_status':
                     switch(event.data.status) {
                         case 'play':
+                            document.body.classList.remove('rec');
                             recognition.stop();
                             break;
 
