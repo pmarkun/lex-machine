@@ -4,269 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lex Dashboard</title>
-    <style>
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            margin: 10px;
-            background-color: black;
-            color: white;
-            display: grid;
-            gap: 30px;
-        }
-
-        h1 {
-            margin: 0;
-            padding: 0;
-        }
-        
-
-        button, input, select {
-            margin: 5pt;
-            padding: 10pt;
-        }
-
-        #audioInput input, #audioInput button {
-            border: solid 1px white;
-            background: transparent;
-            color: white;
-            display: inline-block;
-            /* padding: 5pt;
-            margin: 0;
-            min-height: 25pt; */
-        }
-        #audioInput input {
-            min-width: 450px;
-        }
-
-        #audioInput {
-            background: #222;
-            width: 100%;
-        }
-
-        #chatLog {
-            border: solid 1px white;
-            padding: 20pt;
-            margin: 10pt;
-            overflow-y: scroll;
-            height: 100%;
-        }
-
-        #continuousButton[value='active'] {
-            background: green
-        }
-        #continuousButton[value='inactive'] {
-            background: red
-        }
-
-
-        #header {
-            grid-column-start: 1;
-            grid-column-end: 3;
-        }
-        #botoes {
-            grid-column-start: 1;
-            grid-column-end: 3;
-        }
-
-        #recognitionStatus::before {
-            content: "Reconhecimento: ";
-        }
-        #audioStatus::before {
-            content: "Audio: ";
-        }
-
-        .hide {
-            display: none;
-        }
-
-
-    </style>
+    <link rel="stylesheet" href="static/dashboard.css">
 </head>
 <body>
-    <div id="header">
-        <h1>Lex Dashboard</h1>
-        <div id="recognitionStatus" class="status">Pendente</div>
-        <div id="audioStatus" class="status">Pendente</div>
-    </div>
-    <div id="botoes">
-        <button id="recognitionButton">Reconhecimento</button>
-        <button id="abortAudio">Abortar Audio</button>
-        <button id="pageRefreshButton">Refresh Pg</button>
-        <button id="contextResetButton">Reset Ctx</button>
-        <button id="continuousButton" value="inactive">Conversa Contínua</button>
+    <div class="container">
+        <header id="header">
+            <h1>Lex Dashboard</h1>
+            <div id="recognitionStatus" class="status">Pendente</div>
+            <div id="audioStatus" class="status">Pendente</div>
+        </header>
 
-        <select name="voiceSelect" id="voiceSelect">
-            <option value="F5KJnVcwCsYK7CXx81LD">Voz: Lex</option>
-            <option value="XB0fDUnXU5powFXDhCwa">Voz: Charlotte</option>
-            <option value="XrExE9yKIg1WjnnlVkGX">Voz: Matilda</option>
-            <option value="pjk4khDZ7WQOWYmcelq5">Voz: Getulio</option>
-            <option value="FnSmodEkMxXZLh9Ef9Ly">Voz: Bolsonaro</option>
-            <option value="pfDRLth91Ne5vEXPzdjm">Voz: Lula</option>
-            <option value="kfuhJRYI3JvTLVW5aYdQ">Voz: Marina Helou</option>
-        </select>
-        <select name="promptSelect" id="promptSelect">
-            <option value="default">Prompt: Default</option>
-            <option value="interview">Prompt: Entrevista</option>
-            <option value="picture">Prompt: Fotografia</option>
-            <option value="copycat">Prompt: Imitador</option>
-            <option value="tool">Prompt: Tool Ativa</option>
-            <option value="marcogomes">Prompt: Marco Gomes</option>
-            <option value="custom">Prompt: Custom</option>
-        </select>
+        <!-- Controles Gerais -->
+        <section id="controles">
+            <button id="recognitionButton" data-command="change_recognition">Reconhecimento</button>
+            <button id="abortAudio" data-command="abort_audio">Abortar Áudio</button>
+            <button id="pageRefreshButton" data-command="page_refresh">Refresh Pg</button>
+            <button id="contextResetButton" data-command="context_reset">Reset Ctx</button>
+            <label class="checkbox">
+                <input type="checkbox" id="continuousCheckbox" data-command="change_continuous"> Conversa Contínua
+            </label>
+        </section>
 
-        <div id="customPrompt" class="hide">
-            <textarea name="textPrompt" id="textPrompt">Prompt customizado...</textarea>
-            <button id="sendCustomPromptButton">Send Prompt</button>
-        </div>
-    
-    
-        <div id="audioInput">
-            <input type="text" name="text" id="text" />
-            <button id="sendTextButton">Say Text</button>
-        </div>
-    
-    </div>
-    <div id="chat">
-        <pre id="chatLog">LOG DO CHAT</pre>
+        <!-- Configurações de Voz e Prompt -->
+        <section id="configuracoes">
+            <select name="voiceSelect" id="voiceSelect"></select>
+            <select name="promptSelect" id="promptSelect"></select>
+
+            <div id="customPrompt" class="hide">
+                <textarea name="textPrompt" id="textPrompt">Prompt customizado...</textarea>
+                <button id="sendCustomPromptButton">Enviar Prompt</button>
+            </div>
+        </section>
+
+        <section id="audioInput">
+            <input type="text" name="text" id="text" placeholder="Digite o texto para falar" />
+            <button id="sendTextButton" data-command="play_text">Dizer Texto</button>
+        </section>
+
+        <section id="chat">
+            <pre id="chatLog">LOG DO CHAT</pre>
+        </section>
     </div>
 
-
-
-
-    <script type="module" src="/static/prompts.js"></script>
-    <script>
-
-        let recognitionStatus = null;
-
-        const bc = new BroadcastChannel("activity")
-        bc.onmessage = async (event) => {
-            console.log('BRODCAST', event.data.command, event.data);
-            switch(event.data.command) {
-                case 'chat_update':
-                    console.log('CHAT UPDATE', event.data.interactionHistory);
-                    document.getElementById('chatLog').innerText = JSON.stringify(event.data.interactionHistory, null, '\t');
-                    break;
-
-                case 'recognition_status':
-                    recognitionStatus = event.data.status; // active or disabled
-                    // TODO: ajustar interface
-                    document.getElementById('recognitionStatus').innerText = `${event.data.status}`;
-                    document.getElementById('recognitionButton').innerHTML = recognitionStatus === 'active' ? 'Parar Reconhecimento' : 'Iniciar Reconhecimento'
-                    break;
-
-                case 'audio_status':
-                    document.getElementById('audioStatus').innerText = `${event.data.status}`;
-                    break;
-                
-                case 'change_voice':
-                    document.getElementById('voiceSelect').value = event.data.voiceId
-                    break;
-            }
-        };
-
-
-        document.getElementById('recognitionButton').addEventListener('click', async () => {
-            console.log('recognitionButton');
-            // switch(recognitionStatus) {
-            //     case 'active':
-            //         break;
-            //     default:
-            // }
-            await (new BroadcastChannel("activity")).postMessage({
-                command: 'change_recognition',
-                status: recognitionStatus === 'active' ? 'stop' : 'start'
-            });
-        });
-        document.getElementById('pageRefreshButton').addEventListener('click', async () => {
-            console.log('pageRefreshButton');
-            await (new BroadcastChannel("activity")).postMessage({
-                command: 'page_refresh'
-            });
-        });
-        document.getElementById('abortAudio').addEventListener('click', async () => {
-            console.log('abortAudio');
-            await (new BroadcastChannel("activity")).postMessage({
-                command: 'abort_audio'
-            });
-        });
-        document.getElementById('contextResetButton').addEventListener('click', async () => {
-            console.log('contextResetButton');
-            await (new BroadcastChannel("activity")).postMessage({
-                command: 'context_reset'
-            });
-        });
-
-        document.getElementById('sendTextButton').addEventListener('click', async () => {
-            console.log('sendTextButton');
-            await (new BroadcastChannel("activity")).postMessage({
-                command: 'play_text',
-                text: document.getElementById('text').value
-            });
-        });
-
-        
-        document.getElementById('continuousButton').addEventListener('click', async (e) => {
-            console.log('continuousButton');
-            e.srcElement.value = e.srcElement.value == 'active' ? 'inactive' : 'active';
-            await (new BroadcastChannel("activity")).postMessage({
-                command: 'change_continuous',
-                continuous: e.srcElement.value == 'active'
-            });
-        });
-        
-        document.getElementById('voiceSelect').addEventListener('change', async (e) => {
-            console.log('CHANGE VOICE', e.srcElement.value);
-            await (new BroadcastChannel("activity")).postMessage({
-                command: 'change_voice',
-                voiceId: e.srcElement.value
-            });
-        });
-
-
-        document.getElementById('sendCustomPromptButton').addEventListener('click', async () => {
-            console.log('sendCustomPromptButton');
-            await (new BroadcastChannel("activity")).postMessage({
-                command: 'change_prompt',
-                promptId: 'custom',
-                prompt: document.getElementById('textPrompt').value
-            });
-
-        });
-
-        
-
-
-
-        document.getElementById('promptSelect').addEventListener('change', async (e) => {
-            console.log('CHANGE PROMPT', e.srcElement.value);
-
-            switch(e.srcElement.value) {
-                case 'custom':
-                document.getElementById('customPrompt').classList.remove('hide');
-                    if (e.srcElement.value.trim() == '') {
-                        return;
-                    }
-                    // command.prompt = document.getElementById('textPrompt').value;
-
-                    break;
-
-                default:
-                    document.getElementById('customPrompt').classList.add('hide');
-                    let command = {
-                        command: 'change_prompt',
-                        promptId: e.srcElement.value
-                    };
-                    await (new BroadcastChannel("activity")).postMessage(command);
-            }
-
-
-        });
-
-
-
-
-    </script>
+    <script type="module" src="static/dashboard.js"></script>
 </body>
 </html>

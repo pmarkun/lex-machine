@@ -1,0 +1,104 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    background-color: #121212;
+    color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 90%;
+    max-width: 800px;
+    display: grid;
+    gap: 20px;
+    padding: 20px;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+header, section {
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+button, input, select {
+    margin: 5px;
+    padding: 10px;
+    border-radius: 4px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+}
+
+button {
+    background-color: #3b3b3b;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #575757;
+}
+
+input[type="text"], select, textarea {
+    width: 100%;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border: 1px solid #444;
+}
+
+#chatLog {
+    border: 1px solid #444;
+    padding: 15px;
+    height: 200px;
+    overflow-y: auto;
+    background-color: #222;
+    border-radius: 4px;
+    white-space: pre-wrap; /* Mantém os espaços em branco e quebra linhas conforme necessário */
+    word-wrap: break-word; /* Quebra a palavra automaticamente para evitar overflow */
+    overflow-wrap: break-word;
+}
+
+/* Estilo para as mensagens no log do chat */
+.message {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.user-message {
+    background-color: #3b3b3b;
+    color: #e0e0e0;
+}
+
+.assistant-message {
+    background-color: #575757;
+    color: #ffffff;
+}
+
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hide {
+    display: none;
+}

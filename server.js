@@ -23,6 +23,21 @@ app.get('/nfc', (req, res) => {
   res.sendFile(path.join(__dirname, 'nfc.html'));
 });
 
+app.get('/dashboard/voices', async (req, res) => {
+  try {
+      const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+          method: 'GET',
+          headers: {
+              'xi-api-key': `${process.env.ELEVENLABS_API_KEY}` // Substitua pelo seu método de obtenção da chave
+          }
+      });
+      const data = await response.json();
+      res.json(data);
+  } catch (error) {
+      res.status(500).json({ error: 'Erro ao buscar vozes da Eleven Labs' });
+  }
+});
+
 // Endpoint for search queries
 app.post('/tools/vectorSearch', async (req, res) => {
   console.log('Vector search...');
