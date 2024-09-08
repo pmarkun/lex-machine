@@ -7,7 +7,7 @@ let interactionHistory = [];
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
-    console.log('BRODCAST GPT', event.data.command);
+    // console.log('BRODCAST GPT', event.data.command, event.data);
     switch(event.data.command) {
         case 'context_reset':
             console.log('CONTEXT RESETED!')

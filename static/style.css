@@ -25,3 +25,35 @@ p {
 audio {
     margin-top: 20px;
 }
+
+
+#recIndicator {
+    background-color: green;
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    border-radius: 100%;
+    width: 15px;
+    height: 15px;
+    display: none;
+}
+
+
+body.rec #recIndicator {
+  display: block;
+}
+
+.blink {
+    animation: blink-animation 1.5s steps(5, start) infinite;
+    -webkit-animation: blink-animation 1.5s steps(5, start) infinite;
+}
+  @keyframes blink-animation {
+    to {
+      visibility: hidden;
+    }
+  }
+  @-webkit-keyframes blink-animation {
+    to {
+      visibility: hidden;
+    }
+  }

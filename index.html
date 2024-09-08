@@ -15,6 +15,8 @@
         <div id="text-display"></div>
         <canvas id="oscilloscope"></canvas>
         <div id="sketch-container"></div>
+        <div id="recIndicator" class="blink"></div>
+        <div id="audioStatus"></div>
     </div>
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
@@ -26,7 +28,6 @@
         import './static/chatgpt.js';
         import './static/elevenLabs.js';
 
-        setupRecognition();
 
         let wakeLock = null;
 
@@ -35,7 +36,7 @@
             try {
                 wakeLock = await navigator.wakeLock.request('screen');
                 wakeLock.addEventListener('release', () => {
-                console.log('Wake Lock was released');
+                    console.log('Wake Lock was released');
                 });
                 console.log('Wake Lock is active');
             } catch (err) {
@@ -51,8 +52,40 @@
             // })
             if (!window.lex) {
                 window.lex = new Lex();
+                window.recognition = setupRecognition();
             }
         });
+
+        // const bc = new BroadcastChannel("activity");
+        // bc.onmessage = async (event) => {
+        //     console.log('BRODCAST', event.data.command, event.data);
+        //     switch(event.data.command) {
+
+        //         case 'recognition_status':
+        //             switch(event.data.status) {
+        //                 case 'active':
+        //                     document.body.classList.add('rec')
+        //                     break;
+        //                 case 'disabled':
+        //                     document.body.classList.remove('rec');
+        //                     break;
+        //             }
+        //             // recognitionStatus = event.data.status; // active or disabled
+        //             // TODO: ajustar interface
+        //             // document.getElementById('recognitionStatus').innerText = `${event.data.status}`;
+        //             // document.getElementById('recognitionButton').innerHTML = recognitionStatus === 'active' ? 'Parar Reconhecimento' : 'Iniciar Reconhecimento'
+        //             break;
+
+        //         case 'audio_status':
+        //             document.getElementById('audioStatus').innerText = `${event.data.status}`;
+        //             break;
+                
+        //         case 'change_voice':
+        //             document.getElementById('voiceSelect').value = event.data.voiceId
+        //             break;
+        //     }
+        // };
+
     </script>
 </body>
 </html>

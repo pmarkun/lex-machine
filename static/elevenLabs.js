@@ -8,34 +8,13 @@ let VOICE_ID = ELEVENLABS_VOICE_ID;
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
-    console.log('BRODCAST EL', event.data.command);
+    console.log('BRODCAST EL', event.data.command, event.data);
     switch(event.data.command) {
-        case 'get_status':
-            // TODO: send VOICEID, 
-            break;
-        case 'context_reset':
-            break;
-        case 'change_prompt':
-            break;
         case 'change_voice':
             VOICE_ID = event.data.voiceId;
             break;
-        case 'play_audio':
-            // url
-            break;
         case 'play_text':
             await playText(event.data.text);
-            break;
-        case 'page_refresh':
-            break;
-        case 'audiofinished':
-            break;
-        case 'audio_status':
-            console.log('AUDIO STATUS', event.data.status);
-            break;
-    
-        case 'recognition_status':
-            window.lex.color = event.data.status === 'active' ? 'red' : 'black'
             break;
         }
 };
@@ -158,7 +137,7 @@ export function fetchElevenLabsAudio(text) {
 =3`;
     const socket = new WebSocket(wsUrl);
 
-    let audioQueue = window.lex.audioQueue;
+    // let audioQueue = window.lex.audioQueue;
     const audioCtx = window.lex.audioContext;
     const source = audioCtx.createBufferSource();
 
@@ -178,7 +157,7 @@ export function fetchElevenLabsAudio(text) {
             sendEndMessage(socket);
         }
     };
-    socket.onmessage = (event) => handleSocketMessage(event, audioQueue, audioCtx, oscilloscope);
+    socket.onmessage = (event) => handleSocketMessage(event, audioCtx, oscilloscope);
     socket.onerror = (error) => console.error(`WebSocket Error: ${error}`);
     socket.onclose = (event) => handleSocketClose(event);
 }
@@ -206,7 +185,6 @@ async function sendTextMessage(socket, text) {
         };
         socket.send(JSON.stringify(textMessage));
     }
-
 }
 
 function sendEndMessage(socket) {
@@ -218,14 +196,15 @@ function sendEndMessage(socket) {
     socket.send(JSON.stringify(eosMessage));
 }
 
-function handleSocketMessage(event, audioQueue, audioCtx, oscilloscope) {
+// TODO: xxx resolver audioQueue
+function handleSocketMessage(event, audioCtx, oscilloscope) {
     const response = JSON.parse(event.data);
     if (response.audio) {
         const audioChunk = Uint8Array.from(atob(response.audio), c => c.charCodeAt(0)).buffer;
         const textAlignment = response.alignment;
-        audioQueue.push({"audio" : audioChunk, "alignment" : textAlignment});
-        if (audioQueue.length === 1) {
-            playAudioQueue(audioQueue, audioCtx, oscilloscope);
+        window.lex.audioQueue.push({"audio" : audioChunk, "alignment" : textAlignment});
+        if (window.lex.audioQueue.length === 1) {
+            playAudioQueue(audioCtx, oscilloscope);
         }
     }
 
@@ -242,37 +221,37 @@ function handleSocketClose(event) {
     }
 }
 
-async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
-    if (audioQueue.length > 0) {
-        
-        if (window.lex.abortAudio) {
-            
-            window.lex.isPlaying = false;
-            window.lex.enableMic();
-            setTimeout(() => {
-                window.lex.display.innerHTML = '';
-            },200)
+async function playAudioQueue(audioCtx, oscilloscope) {
 
-            await bc.postMessage({
-                command: 'audio_status',
-                status: 'stop'
-            });
-            await playAudioQueue([], audioCtx, oscilloscope);
-            window.lex.abortAudio = false;
-            return;
-        }
+    if (window.lex.audioQueue.length > 0) {
+        
+        // if (window.lex.abortAudio) {
+            
+        //     window.lex.isPlaying = false;
+        //     // window.lex.enableMic();
+        //     setTimeout(() => {
+        //         window.lex.display.innerHTML = '';
+        //     }, 200);
+
+        //     await bc.postMessage({
+        //         command: 'audio_status',
+        //         status: 'stop'
+        //     });
+        //     // await playAudioQueue(audioCtx, oscilloscope);
+        //     window.lex.abortAudio = false;
+        //     return;
+        // }
             
         window.lex.isPlaying = true;
         await bc.postMessage({
             command: 'audio_status',
             status: 'play'
         });
-        console.log(audioQueue);
-        console.log('AUDIOQUEUE 0:', audioQueue[0]);
-        const audioChunk = audioQueue[0]["audio"];
-        const textAlignment = audioQueue[0]["alignment"];
+        console.log(window.lex.audioQueue);
+        console.log('AUDIOQUEUE 0:', window.lex.audioQueue[0]);
 
-        // console.log('audiochunk', audioChunk); //, await audioChunk.length);
+        const audioChunk = window.lex.audioQueue[0]["audio"];
+        const textAlignment = window.lex.audioQueue[0]["alignment"];
 
         try {
                 
@@ -287,30 +266,32 @@ async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
                 }
 
                 source.onended = async () => {
-                    audioQueue.shift();
-                    await playAudioQueue(audioQueue, audioCtx, oscilloscope);
+                    window.lex.audioQueue.shift();
+                    await playAudioQueue(audioCtx, oscilloscope);
                 };
             });
         } catch (error) {
             // TODO: falar que deu erro e recomeçar.
             console.error('ERRO DECODE AUDIO!!!', error);
-            audioQueue.shift();
-            await playAudioQueue(audioQueue, audioCtx, oscilloscope);
-}
+            window.lex.audioQueue.shift();
+            await playAudioQueue(audioCtx, oscilloscope);
+        }
 
     } else {
+
         console.log('FIM AUDIO');
         // recognition.start();
         window.lex.isPlaying = false;
-        window.lex.enableMic();
+        // window.lex.enableMic();
+
         setTimeout(() => {
             window.lex.display.innerHTML = '';
-        },200)
-
+        },200);
         await bc.postMessage({
             command: 'audio_status',
             status: 'stop'
         });
+
     }
 }
 
