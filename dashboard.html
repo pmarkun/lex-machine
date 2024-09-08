@@ -93,12 +93,13 @@
     </div>
     <div id="botoes">
         <button id="recognitionButton">Reconhecimento</button>
-        <button id="pageRefreshButton">Refresh Página</button>
-        <button id="contextResetButton">Reset Contexto</button>
+        <button id="abortAudio">Abortar Audio</button>
+        <button id="pageRefreshButton">Refresh Pg</button>
+        <button id="contextResetButton">Reset Ctx</button>
         <button id="continuousButton" value="inactive">Conversa Contínua</button>
 
         <select name="voiceSelect" id="voiceSelect">
-            <option value="UlbdV3xpXRE93RKCykdn">Voz: Lex</option>
+            <option value="F5KJnVcwCsYK7CXx81LD">Voz: Lex</option>
             <option value="XB0fDUnXU5powFXDhCwa">Voz: Charlotte</option>
             <option value="XrExE9yKIg1WjnnlVkGX">Voz: Matilda</option>
             <option value="pjk4khDZ7WQOWYmcelq5">Voz: Getulio</option>
@@ -112,6 +113,7 @@
             <option value="picture">Prompt: Fotografia</option>
             <option value="copycat">Prompt: Imitador</option>
             <option value="tool">Prompt: Tool Ativa</option>
+            <option value="marcogomes">Prompt: Marco Gomes</option>
             <option value="custom">Prompt: Custom</option>
         </select>
 
@@ -182,6 +184,12 @@
             console.log('pageRefreshButton');
             await (new BroadcastChannel("activity")).postMessage({
                 command: 'page_refresh'
+            });
+        });
+        document.getElementById('abortAudio').addEventListener('click', async () => {
+            console.log('abortAudio');
+            await (new BroadcastChannel("activity")).postMessage({
+                command: 'abort_audio'
             });
         });
         document.getElementById('contextResetButton').addEventListener('click', async () => {

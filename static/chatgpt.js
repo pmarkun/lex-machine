@@ -28,6 +28,7 @@ bc.onmessage = async (event) => {
                     break;
                 default:
                     window.lex.currentPrompt = event.data.promptId;
+
                     const prompt = PROMPTS[window.lex.currentPrompt];
 
                     if (prompt.presend) {
@@ -74,6 +75,7 @@ export async function fetchOpenAIResponse() {
 
 // 
     let messages = [];
+    document.getElementById("debug").textContent = window.lex.currentPrompt;
 
     switch(window.lex.currentPrompt) {
         case 'custom':
@@ -93,7 +95,7 @@ export async function fetchOpenAIResponse() {
             'Authorization': `Bearer ${OPENAI_API_KEY}`
         },
         body: JSON.stringify({
-            model: "gpt-3.5-turbo-1106",
+            model: "gpt-4o-mini",
             messages: [
                 ...messages,
                 ...interactionHistory

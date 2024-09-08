@@ -22,6 +22,10 @@ bc.onmessage = async (event) => {
             continuousConversation = event.data.continuous;
             break;
     
+        case 'abort_audio':
+            window.lex.abortAudio = true;
+            break;
+
         case 'change_recognition':
             switch(event.data.status) {
                 case 'stop':

@@ -5,72 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lex-Machine</title>
     <link rel="stylesheet" href="/static/style.css">
-    <style>
-         @font-face {
-            font-family: 'Input Mono';
-            src: url('/static/assets/fonts/Input Mono/Input Mono Light.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-        }
-
-        body {
-            font-family: 'Input Mono', sans-serif;
-
-        }
-        html, body, #fullscreenGeral {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            overflow: hidden;
-            background-color: black;;
-            /*background-image: url('/static/assets/background.jpg');
-            background-repeat: no-repeat;*/
-            background-size: cover;
-            background-position: center;
-
-        }
-        #recordButton {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-            display: none;
-        }
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-        #text-display {
-            min-width: 80%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1001; /* Deve ser maior que o z-index do botão e do canvas */
-            /*background: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente para melhor visibilidade */
-            color: rgba(223, 227, 212, 1); /* Cor do texto */
-            padding: 10px; /* Espaçamento interno para melhor legibilidade */
-            border-radius: 10px; /* Bordas arredondadas para um visual mais agradável */
-            font-size: 3.5em; /* Tamanho da fonte */
-            text-align: center; /* Centralizar o texto */
-            letter-spacing: -.65pt;
-        }
-
-        #logoLex {
-            position: fixed;
-            top: 5%;
-            margin: 0 auto;
-            width: 10%;
-            left: 50%;
-            transform: translate(-50%, 0);
-        }
-    </style>
+    <link rel="stylesheet" href="/static/pequenoAto.css">
 </head>
 <body>
     <div id="fullscreenGeral">
         <img src="./static/assets/lex.svg" alt="" id="logoLex" />
         <button id="recordButton">Start Monitoring</button>
+        <div id="debug"></div>
         <div id="text-display"></div>
         <canvas id="oscilloscope"></canvas>
         <div id="sketch-container"></div>

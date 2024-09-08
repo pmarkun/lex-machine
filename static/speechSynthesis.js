@@ -36,6 +36,7 @@ export class Lex {
         this.isPlaying = false;
         this.isListening = false;
         this.isMicActive = false;
+        this.abortAudio = false;
 
         this.currentPrompt = 'default';
         this.customPrompt = '';

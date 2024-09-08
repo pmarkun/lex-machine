@@ -244,6 +244,24 @@ function handleSocketClose(event) {
 
 async function playAudioQueue(audioQueue, audioCtx, oscilloscope) {
     if (audioQueue.length > 0) {
+        
+        if (window.lex.abortAudio) {
+            
+            window.lex.isPlaying = false;
+            window.lex.enableMic();
+            setTimeout(() => {
+                window.lex.display.innerHTML = '';
+            },200)
+
+            await bc.postMessage({
+                command: 'audio_status',
+                status: 'stop'
+            });
+            await playAudioQueue([], audioCtx, oscilloscope);
+            window.lex.abortAudio = false;
+            return;
+        }
+            
         window.lex.isPlaying = true;
         await bc.postMessage({
             command: 'audio_status',
