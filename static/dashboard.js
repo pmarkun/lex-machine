@@ -1,17 +1,23 @@
 import { PROMPTS } from './prompts.js';
 import { ELEVENLABS_API_KEY } from './config.js';
 
-const bc = new BroadcastChannel("activity");
 let frases = []; // Banco de frases
 
+const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
-    console.log('BROADCAST', event.data.command, event.data);
+
+    // if (event.data.command != 'status') {
+    console.log('BROADCAST DASH', event.data.command, event.data);
+    // }
+
     switch (event.data.command) {
         case 'chat_update':
             displayChatLog(event.data.interactionHistory);
             break;
-        case 'recognition_status':
+        case 'status_recognition':
             handleRecognitionStatus(event.data.status);
+            break;
+        case 'change_recognition':
             break;
         case 'audio_status':
             document.getElementById('audioStatus').innerText = `${event.data.status}`;
@@ -22,12 +28,15 @@ bc.onmessage = async (event) => {
         case 'transcript':
             updateTranscript(event.data.transcript);
             break;
+        case 'status':
+            break;
     }
 };
 
 const handleRecognitionStatus = (status) => {
+    console.log('RECOG', status);
     document.getElementById('recognitionStatus').innerText = `${status}`;
-    document.getElementById('recognitionButton').innerHTML = status === 'active' ? 'Parar Reconhecimento' : 'Iniciar Reconhecimento';
+    document.getElementById('recognitionButton').innerHTML = status === 'Ouvindo' ? 'Parar Reconhecimento' : 'Iniciar Reconhecimento';
 };
 
 // Lidar com os eventos de botão usando data-command

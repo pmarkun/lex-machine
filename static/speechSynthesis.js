@@ -45,6 +45,18 @@ export class Lex {
 
         // TODO: setInterval enviando status acima para navegador
 
+        // this.timerStatus = setInterval(async ()=>{
+        //     await (new BroadcastChannel("activity")).postMessage({
+        //         command: 'status',
+        //         isPlaying: this.isPlaying,
+        //         isListening: this.isListening,
+        //         isMicActive: this.isMicActive,
+        //         abortAudio: this.abortAudio,
+        //         continuousConversation: this.continuousConversation
+        //     });
+        // }, 500);
+
+
         this.enableMic = function() {
             // Verifica se o navegador suporta a API getUserMedia
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -61,37 +73,19 @@ export class Lex {
                     setupVisual(audioCtx, source);
                     // this.isMicActive = true;
 
-                    console.log('AUDIO TRACKS', stream.getAudioTracks())
-                    const audioTrack = stream.getAudioTracks()[0];
+                    // console.log('AUDIO TRACKS', stream.getAudioTracks())
+                    // const audioTrack = stream.getAudioTracks()[0];
 
-                    // function toggleMute() {
-                    //     // console.log('toggleMute', !audioTrack.enabled)
-                    //     audioTrack.enabled = !audioTrack.enabled;
-                    //     console.log(audioTrack);
-                    //     // this.isMuted = !audioTrack.enabled;
-                    // }
-                    // document.addEventListener('keydown', function(e) {
-                    //     // e.preventDefault();
-                    //     console.log('keydown', e.key)
-                    //     switch(e.key) {
-                    //         case 'ArrowRight':
-                    //             toggleMute();
-                    //             break;
-                    //         case 'ArrowLeft':
+                    // const bc = new BroadcastChannel("activity")
+                    // bc.onmessage = async (event) => {
+                    //     // console.log('BRODCAST', event.data.command, event.data);
+                    //     switch(event.data.command) {
+                    //         case 'toggleMute':
+                    //             console.log('TOGGLE MUTE', event.data.enabled);
+                    //             audioTrack.enabled = event.data.enabled;
                     //             break;
                     //     }
-                    // });
-
-                    const bc = new BroadcastChannel("activity")
-                    bc.onmessage = async (event) => {
-                        console.log('BRODCAST', event.data.command, event.data);
-                        switch(event.data.command) {
-                            case 'toggleMute':
-                                console.log('TOGGLE MUTE', event.data.enabled);
-                                audioTrack.enabled = event.data.enabled;
-                                break;
-                        }
-                    }            
+                    // }
                     // await (new BroadcastChannel("activity")).postMessage({
                     //     command: 'toggle_mic',
                     //     status: recognitionStatus === 'active' ? 'stop' : 'start'
@@ -110,7 +104,7 @@ export class Lex {
 
         const bc = new BroadcastChannel("activity");
         bc.onmessage = async (event) => {
-            // console.log('BRODCAST SR', event.data.command, event.data);
+            console.log('BROAD', event.data);
             switch(event.data.command) {
                 case 'transcript':
                     // console.log('transcript data', event.data.transcript);
@@ -130,46 +124,36 @@ export class Lex {
                     break;
             
                 case 'abort_audio':
-                    // window.lex.abortAudio = true;
+                    window.lex.abortAudio = true;
                     this.audioQueue = [];
                     break;
         
                 case 'change_recognition':
+                    console.log('FORCED change_recognition', event.data.status)
                     switch(event.data.status) {
                         case 'stop':
                             window.recognition.stop();
+                            await bc.postMessage({
+                                command: 'status_recognition',
+                                status: 'Parado'
+                            });
+                            document.body.classList.remove('rec');
                             break;
                         case 'start':
                             window.recognition.start();
-                            // document.body.classList.add('rec');
                             break;
                     }
                     break;
                 
-                case 'recognition_status':
-                    console.log('CHANGING RECOGNITION STATUS...');
-                    // switch(event.data.status) {
-                    //     case 'active':
-                    //         // recognition.start();
-                    //         break;
-                    //     case 'disabled':
-                    //         if (continuousConversation) {
-                    //             recognition.start();
-                    //         }
-                    //         break;
-                    //     default:
-                    //         console.log(event.data);
-                    // }
-                    break;
-        
                 case 'audio_status':
                     switch(event.data.status) {
                         case 'play':
                             recognition.stop();
                             break;
+
                         case 'stop':
                             console.log('\n\n\n')
-                            console.log('window.lex.continuousConversation', window.lex.continuousConversation);
+                            console.log('AUDIO_STATUS STOP: window.lex.continuousConversation', window.lex.continuousConversation);
                             console.log('\n\n\n')
                             if (window.lex.continuousConversation) {
                                 console.log('CONTINUOUS CONVERSATION LEX...');
@@ -180,7 +164,7 @@ export class Lex {
                                 // });
 
                                 if (this.continuousConversation && !this.isListening) {
-                                    recognition.start();
+                                    window.recognition.start();
                                 }
                             }
                     
@@ -198,10 +182,6 @@ export class Lex {
                     break;
                 case 'page_refresh':
                     window.location.reload();
-                    break;
-                case 'audiofinished':
-                    // TODO: verificar se vai reiniciar reconhecimento
-                    recognition.start();
                     break;
             }
         };

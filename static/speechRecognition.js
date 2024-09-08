@@ -36,86 +36,6 @@ export function setupRecognition() {
         // continuousConversation = true;
     }
 
-    // bc.onmessage = async (event) => {
-    //     console.log('BRODCAST SR', event.data.command, event.data);
-    //     switch(event.data.command) {
-    //         case 'get_status':
-    //             // TODO: send VOICEID, continuousConversation e recognizing
-    //             break;
-    //         case 'context_reset':
-    //             break;
-    //         case 'change_prompt':
-    //             break;
-    //         case 'change_voice':
-    //             break;
-    
-    //         case 'change_continuous':
-    //             continuousConversation = event.data.continuous;
-    //             break;
-        
-    //         case 'abort_audio':
-    //             window.lex.abortAudio = true;
-    //             break;
-    
-    //         case 'change_recognition':
-    //             switch(event.data.status) {
-    //                 case 'stop':
-    //                     recognition.stop();
-    //                     document.body.classList.remove('rec');
-    //                     break;
-    //                 case 'start':
-    //                     recognition.start();
-    //                     document.body.classList.add('rec');
-    //                     break;
-    //             }
-    //             break;
-            
-    //         case 'recognition_status':
-    //             console.log('CHANGING RECOGNITION STATUS...')
-    //             // switch(event.data.status) {
-    //             //     case 'active':
-    //             //         // recognition.start();
-    //             //         break;
-    //             //     case 'disabled':
-    //             //         if (continuousConversation) {
-    //             //             recognition.start();
-    //             //         }
-    //             //         break;
-    //             //     default:
-    //             //         console.log(event.data);
-    //             // }
-    //             break;
-    
-    //         case 'audio_status':
-    //             switch(event.data.status) {
-    //                 case 'play':
-    //                     recognition.stop();
-    //                     break;
-    //                 case 'stop':
-    //                     if (continuousConversation && !recognizing) {
-    //                         recognition.start();
-    //                     }
-    //                     break;
-    //             }
-    //             break;
-    //         case 'play_audio':
-    //             // url
-    //             break;
-    //         case 'play_text':
-    //             break;
-    //         case 'play_audio':
-    //             // url
-    //             break;
-    //         case 'page_refresh':
-    //             window.location.reload();
-    //             break;
-    //         case 'audiofinished':
-    //             // TODO: verificar se vai reiniciar reconhecimento
-    //             recognition.start();
-    //             break;
-    //     }
-    // };
-    
     return recognition;
 }
 
@@ -125,39 +45,46 @@ async function handleSpeechsStart(e) {
     console.log('handleSpeechsStart', e);
     recognizing = true;
     window.lex.isListening = true;
+    await bc.postMessage({
+        command: 'status_recognition',
+        status: 'Ouvindo'
+    });
 }
 async function handleSpeechsEnd(e) {
     document.body.classList.remove('rec');
     console.log('handleSpeechsEnd', e);
     recognizing = false;
     window.lex.isListening = false;
+    await bc.postMessage({
+        command: 'status_recognition',
+        status: 'Parado'
+    });
+
 }
 
 async function handleRecognitionError() {
     recognizing = false;
     window.lex.isListening = false;
 
-    // await bc.postMessage({
-    //     command: 'recognition_status',
-    //     status: 'disabled'
-    // });
+    await bc.postMessage({
+        command: 'status_recognition',
+        status: 'Parado'
+    });
 }
 async function handleRecognitionStart() {
+    document.body.classList.add('rec');
     recognizing = true;
     window.lex.isListening = true;
-    recordButton.textContent = 'Stop Monitoring';
     console.log('Recognition started');
-
-    // await bc.postMessage({
-    //     command: 'recognition_status',
-    //     status: 'active'
-    // });
+    await bc.postMessage({
+        command: 'status_recognition',
+        status: 'Ouvindo'
+    });
 }
 
 async function handleRecognitionEnd() {
     recognizing = false;
     window.lex.isListening = false;
-    recordButton.textContent = 'Start Monitoring';
     console.log('* * * * Recognition ENDED!!! * * * *');
 
     // if (!recordingStoppedByUser) {
@@ -177,13 +104,6 @@ async function handleRecognitionResult(event) {
         transcript: partialTranscript
     });
 
-
-    // event.results[event.results.length - 1][0].transcript);
-    // const transcript = event.results[event.results.length - 1][0].transcript;
-    // console.log(`Transcription: ${transcript}`);
-
-    // xxx
-
     silenceTimeout = setTimeout(() => {
         console.log('Recognition stopped');
         recognition.stop(); // Stop recognition after silence
@@ -196,18 +116,3 @@ async function handleRecognitionResult(event) {
 
 
 
-
-
-const recordButton = document.getElementById('recordButton');
-
-recordButton.addEventListener('click', () => {
-    if (recognizing) {
-        recordingStoppedByUser = true;
-        recognition.stop();
-        console.log('Recognition stopped by user');
-        return;
-    }
-    recordingStoppedByUser = false;
-    recognition.start();
-    console.log('Recognition started by user');
-});

@@ -8,9 +8,10 @@ let VOICE_ID = ELEVENLABS_VOICE_ID;
 
 const bc = new BroadcastChannel("activity");
 bc.onmessage = async (event) => {
-    console.log('BRODCAST EL', event.data.command, event.data);
+    // console.log('BRODCAST EL', event.data.command, event.data);
     switch(event.data.command) {
         case 'change_voice':
+            console.log('CHANGE_VOICE EL', event.data);
             VOICE_ID = event.data.voiceId;
             break;
         case 'play_text':
@@ -19,6 +20,12 @@ bc.onmessage = async (event) => {
         }
 };
 
+function clearUtterance() {
+    setTimeout(() => {
+        window.lex.display.innerHTML = '';
+    },200)
+
+}
 
 export async function playText(text) {
     switch(VOICE_ENGINE) {
@@ -118,9 +125,7 @@ export async function fetchLocalSynthesisAudio(text) {
             synth.speak(utterance);
         }
         else {
-            setTimeout(() => {
-                window.lex.display.innerHTML = '';
-            },200)
+            clearUtterance();
         }
     };
 
@@ -145,6 +150,7 @@ export function fetchElevenLabsAudio(text) {
     let oscilloscope = setupVisual(audioCtx, source);
     
     socket.onopen = () => {
+        window.lex.abortAudio = false;
         sendInitialMessages(socket);
         try {
             const sentences = text.match(/[^\.!\?]+[\.!\?]+/g).map(sentence => sentence);
@@ -157,7 +163,7 @@ export function fetchElevenLabsAudio(text) {
             sendEndMessage(socket);
         }
     };
-    socket.onmessage = (event) => handleSocketMessage(event, audioCtx, oscilloscope);
+    socket.onmessage = (event) => handleSocketMessage(socket, event, audioCtx, oscilloscope);
     socket.onerror = (error) => console.error(`WebSocket Error: ${error}`);
     socket.onclose = (event) => handleSocketClose(event);
 }
@@ -178,7 +184,6 @@ function sendInitialMessages(socket) {
 
 async function sendTextMessage(socket, text) {
     if (text !== '') {
-
         const textMessage = {
             text: text,
             try_trigger_generation: true,
@@ -196,8 +201,12 @@ function sendEndMessage(socket) {
     socket.send(JSON.stringify(eosMessage));
 }
 
-// TODO: xxx resolver audioQueue
-function handleSocketMessage(event, audioCtx, oscilloscope) {
+function handleSocketMessage(socket, event, audioCtx, oscilloscope) {
+    if (window.lex.abortAudio) {
+        socket.close();
+        clearUtterance();
+        window.lex.abortAudio = false;
+    }
     const response = JSON.parse(event.data);
     if (response.audio) {
         const audioChunk = Uint8Array.from(atob(response.audio), c => c.charCodeAt(0)).buffer;
@@ -207,8 +216,8 @@ function handleSocketMessage(event, audioCtx, oscilloscope) {
             playAudioQueue(audioCtx, oscilloscope);
         }
     }
-
     if (response.isFinal) {
+        window.lex.abortAudio = false;
         //event.target.close();
     }
 }
@@ -222,33 +231,14 @@ function handleSocketClose(event) {
 }
 
 async function playAudioQueue(audioCtx, oscilloscope) {
-
     if (window.lex.audioQueue.length > 0) {
-        
-        // if (window.lex.abortAudio) {
-            
-        //     window.lex.isPlaying = false;
-        //     // window.lex.enableMic();
-        //     setTimeout(() => {
-        //         window.lex.display.innerHTML = '';
-        //     }, 200);
-
-        //     await bc.postMessage({
-        //         command: 'audio_status',
-        //         status: 'stop'
-        //     });
-        //     // await playAudioQueue(audioCtx, oscilloscope);
-        //     window.lex.abortAudio = false;
-        //     return;
-        // }
-            
         window.lex.isPlaying = true;
         await bc.postMessage({
             command: 'audio_status',
             status: 'play'
         });
-        console.log(window.lex.audioQueue);
-        console.log('AUDIOQUEUE 0:', window.lex.audioQueue[0]);
+        console.log('AUDIOQUEUE', window.lex.audioQueue.length);
+        // console.log('AUDIOQUEUE 0:', window.lex.audioQueue[0]);
 
         const audioChunk = window.lex.audioQueue[0]["audio"];
         const textAlignment = window.lex.audioQueue[0]["alignment"];
@@ -278,15 +268,12 @@ async function playAudioQueue(audioCtx, oscilloscope) {
         }
 
     } else {
-
         console.log('FIM AUDIO');
         // recognition.start();
         window.lex.isPlaying = false;
-        // window.lex.enableMic();
+        window.lex.enableMic();
 
-        setTimeout(() => {
-            window.lex.display.innerHTML = '';
-        },200);
+        clearUtterance();
         await bc.postMessage({
             command: 'audio_status',
             status: 'stop'
