@@ -177,7 +177,7 @@ let config = {
 
 Deixe a explicação curta e breve.
 Lembre-se que isso será falado em voz alta, então faça a explicação como se estivesse conversando com um amigo inteligente, de maneira clara e fácil de entender.`,
-  "userPrompt": `Leia o projeto abaixo e forneça a análise conforme especificado:\n\n${text.split('\n\n').join('\n').substring(0, 40000)}`,
+  "userPrompt": `Leia o projeto abaixo e forneça a análise conforme especificado:\n\n${text.split('\n\n').join('\n').substring(0, 30000)}`,
   "mode" : "text"
 }
 
