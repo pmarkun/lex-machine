@@ -17,10 +17,12 @@ export function setupRecognition() {
     recognition.interimResults = true;
     recognition.lang = LANG;
 
-    const grammar = '#JSGF V1.0; grammar lex; public <lex> = (Lex | lex | Lais | Alex) { Lex };';
-    const speechRecognitionList = new webkitSpeechGrammarList();
-    speechRecognitionList.addFromString(grammar, 1);
-    recognition.grammars = speechRecognitionList;
+    if (webkitSpeechGrammarList) {
+        const grammar = '#JSGF V1.0; grammar lex; public <lex> = (Lex | lex | Lais | Alex) { Lex };';
+        const speechRecognitionList = new webkitSpeechGrammarList();
+        speechRecognitionList.addFromString(grammar, 1);
+        recognition.grammars = speechRecognitionList;
+    }
 
     recognition.onstart = handleRecognitionStart;
     recognition.onend = handleRecognitionEnd;
